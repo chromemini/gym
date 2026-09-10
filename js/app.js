@@ -1,0 +1,306 @@
+// js/app.js — screens: Today, Gym, Settings. Loads the app and connects everything.
+
+import * as data from "./db.js";
+import { $, showToast, openDemo, closeDemo, escapeHtml } from "./ui.js";
+import { initFood, renderFood } from "./food.js";
+import { renderProgress } from "./progress.js";
+
+let currentScreen = "today";
+
+function niceDate(key) {
+  return new Date(key + "T00:00:00").toLocaleDateString(undefined, {
+    weekday: "long",
+    day: "numeric",
+    month: "long"
+  });
+}
+
+async function showScreen(name) {
+  currentScreen = name;
+  document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
+  $("screen-" + name).classList.add("active");
+  document.querySelectorAll(".tab").forEach((t) => {
+    t.classList.toggle("active", t.dataset.screen === name);
+  });
+  window.scrollTo(0, 0);
+  await renderScreen(name);
+}
+
+async function renderScreen(name) {
+  if (name === "today") await renderToday();
+  else if (name === "workout") await renderWorkout();
+  else if (name === "food") await renderFood();
+  else if (name === "progress") await renderProgress();
+  else if (name === "settings") await renderSettings();
+}
+
+async function updateStreakBadge() {
+  $("streak-num").textContent = await data.getStreak();
+}
+
+async function renderToday() {
+  const date = data.todayKey();
+  $("today-date").textContent = niceDate(date);
+  const idx = await data.splitIndexFor(date);
+  const split = data.SPLIT[idx];
+  $("today-split").textContent = split.name + " day";
+  $("today-split-ex").textContent = split.exercises.join(" + ");
+
+  const target = await data.getSetting("calorieTarget", 2500);
+  const kcal = await data.dayKcal(date);
+  const day = await data.getDay(date);
+
+  $("today-kcal").textContent = Math.round(kcal) + " kcal";
+  $("today-target").textContent = target + " kcal";
+  $("today-workout").textContent = day.workoutDone
+    ? "Done"
+    : day.restDay
+      ? "Rest day"
+      : "Not done";
+
+  const pct = ((day.workoutDone || day.restDay) ? 50 : 0) + (kcal > 0 ? 50 : 0);
+  const C = 2 * Math.PI * 52;
+  $("ring-fill").style.strokeDasharray = `${(C * pct) / 100} ${C}`;
+  $("ring-pct").textContent = pct + "%";
+
+  await updateStreakBadge();
+}
+
+function setChip(s) {
+  return `<span class="chip">${s.weight}kg x ${s.reps}<button class="chip-x" data-del="${s.id}" aria-label="Remove set"><svg class="icon small-icon"><use href="#i-x"/></svg></button></span>`;
+}
+
+async function renderWorkout() {
+  const date = data.todayKey();
+  const idx = await data.splitIndexFor(date);
+  const split = data.SPLIT[idx];
+
+  $("workout-split-name").textContent = split.name + " day";
+  $("workout-date").textContent = niceDate(date);
+
+  const day = await data.getDay(date);
+  const done = !!day.workoutDone;
+  $("workout-done-banner").classList.toggle("hidden", !done);
+  $("btn-finish").disabled = done;
+  $("btn-rest").disabled = !!day.restDay;
+
+  const exs = await data.exercisesForSplit(idx);
+  const list = $("workout-list");
+  list.innerHTML = "";
+
+  for (const ex of exs) {
+    const prev = await data.previousSets(ex.id, date);
+    const today = await data.setsFor(date, ex.id);
+    const lastW = prev.length ? prev[prev.length - 1].weight : "";
+    const lastR = prev.length ? prev[prev.length - 1].reps : "";
+
+    const card = document.createElement("div");
+    card.className = "card ex-card";
+    card.dataset.exId = ex.id;
+    card.innerHTML = `
+      <div class="ex-head">
+        <div>
+          <h3>${escapeHtml(ex.name)}</h3>
+          <p class="muted small">Last: ${prev.length ? prev.map((s) => `${s.weight}kg x ${s.reps}`).join(", ") : "first time"}</p>
+        </div>
+        <button class="icon-btn demo-btn" data-demo="${ex.id}" aria-label="How to do it">
+          <svg class="icon"><use href="#i-video"/></svg>
+        </button>
+      </div>
+      <div class="set-chips">${today.length ? today.map(setChip).join("") : `<span class="muted small">No sets yet today</span>`}</div>
+      <div class="grid-3">
+        <input type="number" class="input in-weight" value="${lastW}" placeholder="kg" inputmode="decimal">
+        <input type="number" class="input in-reps" value="${lastR}" placeholder="reps" inputmode="numeric">
+        <button class="btn primary add-set"><svg class="icon"><use href="#i-plus"/></svg> Set</button>
+      </div>`;
+    list.appendChild(card);
+  }
+}
+
+async function openDemoModal(exId) {
+  const ex = await data.db.exercises.get(exId);
+  const videoUrl = await data.getSetting("video:" + exId, "");
+  const mwKey = await data.getSetting("musclewikiKey", "");
+  await openDemo({
+    name: ex.name,
+    notes: data.FORM_NOTES[ex.name] || "",
+    videoUrl,
+    mwKey,
+    onSave: async (url) => {
+      await data.setSetting("video:" + exId, url);
+      showToast(url ? "Video link saved" : "Video link cleared");
+    }
+  });
+}
+
+async function renderSettings() {
+  $("app-version").textContent = "v" + data.APP_VERSION;
+  $("set-calorie").value = await data.getSetting("calorieTarget", 2500);
+  $("set-usda").value = await data.getSetting("usdaKey", "");
+  $("set-mw").value = await data.getSetting("musclewikiKey", "");
+  const theme = await data.getSetting("theme", "dark");
+  $("theme-label").textContent = theme === "dark" ? "Switch to light" : "Switch to dark";
+
+  let status = "normal";
+  if (navigator.storage && navigator.storage.persisted) {
+    try {
+      status = (await navigator.storage.persisted()) ? "protected" : "normal";
+    } catch (e) {}
+  }
+  $("storage-status").textContent = status;
+}
+
+async function ensureTheme() {
+  const theme = await data.getSetting("theme", "dark");
+  document.body.classList.toggle("light", theme === "light");
+}
+
+function bindNavigation() {
+  document.querySelectorAll(".tab").forEach((t) => {
+    t.addEventListener("click", () => showScreen(t.dataset.screen));
+  });
+  document.querySelectorAll("[data-goto]").forEach((b) => {
+    b.addEventListener("click", () => showScreen(b.dataset.goto));
+  });
+  $("demo-close").addEventListener("click", closeDemo);
+  $("demo-modal").addEventListener("click", (e) => {
+    if (e.target === $("demo-modal")) closeDemo();
+  });
+}
+
+function bindWorkout() {
+  $("workout-list").addEventListener("click", async (e) => {
+    const demo = e.target.closest(".demo-btn");
+    if (demo) {
+      await openDemoModal(parseInt(demo.dataset.demo, 10));
+      return;
+    }
+    const del = e.target.closest("[data-del]");
+    if (del) {
+      await data.db.sets.delete(parseInt(del.dataset.del, 10));
+      await renderWorkout();
+      return;
+    }
+    const add = e.target.closest(".add-set");
+    if (add) {
+      const card = add.closest(".ex-card");
+      const exId = parseInt(card.dataset.exId, 10);
+      const weight = parseFloat(card.querySelector(".in-weight").value);
+      const reps = parseInt(card.querySelector(".in-reps").value, 10);
+      if (!weight || !reps) {
+        showToast("Enter weight and reps first");
+        return;
+      }
+      const res = await data.logSet({
+        date: data.todayKey(),
+        exerciseId: exId,
+        weight,
+        reps
+      });
+      if (res.isNewPr) showToast("New personal best. " + weight + "kg x " + reps);
+      await renderWorkout();
+    }
+  });
+
+  $("btn-finish").addEventListener("click", async () => {
+    const date = data.todayKey();
+    const count = await data.db.sets.where("date").equals(date).count();
+    if (count === 0) {
+      showToast("Log at least one set first");
+      return;
+    }
+    await data.updateDay(date, { workoutDone: 1, restDay: 0 });
+    showToast("Workout done. Streak alive.");
+    await updateStreakBadge();
+    await renderWorkout();
+  });
+
+  $("btn-rest").addEventListener("click", async () => {
+    await data.updateDay(data.todayKey(), { restDay: 1 });
+    showToast("Rest day saved. Streak stays alive.");
+    await updateStreakBadge();
+    await renderWorkout();
+  });
+
+  $("btn-rotate").addEventListener("click", async () => {
+    const date = data.todayKey();
+    const cur = await data.splitIndexFor(date);
+    await data.updateDay(date, { splitIndex: (cur + 1) % data.SPLIT.length });
+    await renderWorkout();
+  });
+}
+
+function bindSettings() {
+  $("btn-save-calorie").addEventListener("click", async () => {
+    const v = parseInt($("set-calorie").value, 10);
+    if (!v || v < 500) {
+      showToast("Enter a target like 2500");
+      return;
+    }
+    await data.setSetting("calorieTarget", v);
+    showToast("Target saved");
+  });
+
+  $("btn-theme").addEventListener("click", async () => {
+    const cur = await data.getSetting("theme", "dark");
+    const next = cur === "dark" ? "light" : "dark";
+    await data.setSetting("theme", next);
+    document.body.classList.toggle("light", next === "light");
+    $("theme-label").textContent = next === "dark" ? "Switch to light" : "Switch to dark";
+  });
+
+  $("btn-save-keys").addEventListener("click", async () => {
+    await data.setSetting("usdaKey", $("set-usda").value.trim());
+    await data.setSetting("musclewikiKey", $("set-mw").value.trim());
+    showToast("Keys saved");
+  });
+
+  $("btn-export").addEventListener("click", async () => {
+    const json = await data.exportAll();
+    const blob = new Blob([json], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "gym-umer-backup-" + data.todayKey() + ".json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+    $("backup-status").textContent = "Backup file saved on your device.";
+  });
+
+  $("import-file").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      await data.importAll(await file.text());
+      showToast("Backup loaded");
+      await updateStreakBadge();
+      await renderScreen(currentScreen);
+    } catch (err) {
+      showToast("Could not read that file");
+    }
+    e.target.value = "";
+  });
+}
+
+async function init() {
+  await data.seedAll();
+  await ensureTheme();
+
+  if (navigator.storage && navigator.storage.persist) {
+    try {
+      await navigator.storage.persist();
+    } catch (e) {}
+  }
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  }
+
+  bindNavigation();
+  bindWorkout();
+  bindSettings();
+  initFood();
+
+  await updateStreakBadge();
+  await showScreen("today");
+}
+
+init();

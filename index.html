@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e0e10">
+<meta name="description" content="Daily gym and food tracker. Works fully offline.">
+<title>gym.umer.ai</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 9.5V21h5v-6h4v6h5V9.5"/></symbol>
+  <symbol id="i-dumbbell" viewBox="0 0 24 24"><path d="M6.5 6.5v11M17.5 6.5v11M6.5 12h11M2.5 8.5v7M21.5 8.5v7"/></symbol>
+  <symbol id="i-bowl" viewBox="0 0 24 24"><path d="M4 12h16a8 8 0 0 1-16 0zM8 8c0-1.5 1-2 1-3.5M13 8c0-1.5 1-2 1-3.5"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20v-8M10 20V4M16 20v-6M2 20h20"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></symbol>
+  <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 2.5c1 4 5.5 5.5 5.5 10a5.5 5.5 0 0 1-11 0c0-2 .9-3.6 2-4.7.1 1.8 1 3 2.2 3.2-.9-2.8-.2-6 1.3-8.5z"/></symbol>
+  <symbol id="i-video" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM16 10l5-3v10l-5-3"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M6 11l6 6 6-6M4 21h16"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 21V9M6 13l6-6 6 6M4 3h16"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M4 12l5 5L20 7"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/></symbol>
+  <symbol id="i-rest" viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></symbol>
+</svg>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <span class="brand">gym.umer.ai</span>
+    <span class="streak-badge" title="Day streak">
+      <svg class="icon"><use href="#i-flame"/></svg>
+      <span id="streak-num">0</span>
+    </span>
+  </div>
+</header>
+
+<main id="main">
+
+  <section id="screen-today" class="screen active">
+    <div class="card center-card">
+      <p class="muted" id="today-date">—</p>
+      <div class="ring-wrap">
+        <svg viewBox="0 0 120 120" class="ring" aria-hidden="true">
+          <circle class="ring-bg" cx="60" cy="60" r="52"/>
+          <circle class="ring-fill" id="ring-fill" cx="60" cy="60" r="52"/>
+        </svg>
+        <div class="ring-center">
+          <span class="ring-pct" id="ring-pct">0%</span>
+          <span class="muted small">today</span>
+        </div>
+      </div>
+      <p class="split-name" id="today-split">—</p>
+      <p class="muted small" id="today-split-ex">—</p>
+    </div>
+    <div class="card">
+      <div class="row"><span>Eaten today</span><strong id="today-kcal">0 kcal</strong></div>
+      <div class="row"><span>Daily target</span><strong id="today-target">0 kcal</strong></div>
+      <div class="row"><span>Workout</span><strong id="today-workout">Not done</strong></div>
+    </div>
+    <div class="actions">
+      <button class="btn primary big" data-goto="workout">
+        <svg class="icon"><use href="#i-dumbbell"/></svg> Start workout
+      </button>
+      <button class="btn big" data-goto="food">
+        <svg class="icon"><use href="#i-bowl"/></svg> Log food
+      </button>
+    </div>
+  </section>
+
+  <section id="screen-workout" class="screen">
+    <div class="screen-head">
+      <div>
+        <h2 id="workout-split-name">—</h2>
+        <p class="muted small" id="workout-date">—</p>
+      </div>
+      <button class="btn small" id="btn-rotate">Next day plan</button>
+    </div>
+    <div class="banner hidden" id="workout-done-banner">
+      <svg class="icon"><use href="#i-check"/></svg> Workout done. Well played.
+    </div>
+    <div id="workout-list"></div>
+    <div class="actions">
+      <button class="btn primary big" id="btn-finish">
+        <svg class="icon"><use href="#i-check"/></svg> Finish workout
+      </button>
+      <button class="btn big" id="btn-rest">
+        <svg class="icon"><use href="#i-rest"/></svg> Mark rest day
+      </button>
+    </div>
+  </section>
+
+  <section id="screen-food" class="screen">
+    <div class="card">
+      <div class="row"><span>Eaten today</span><strong id="food-total">0 kcal</strong></div>
+      <div class="row"><span>Target</span><strong id="food-target">0 kcal</strong></div>
+      <div class="bar"><div class="bar-fill" id="food-bar"></div></div>
+      <p class="muted small" id="food-left">—</p>
+    </div>
+    <div class="card">
+      <input type="search" id="food-search" class="input" placeholder="Search food (chicken, rice, roti)" autocomplete="off">
+      <p class="muted small" id="food-search-hint">Type to search saved foods. Online results show up when internet is on.</p>
+      <div id="food-results"></div>
+    </div>
+    <div class="card">
+      <h3>Add by hand</h3>
+      <div class="grid-2">
+        <input type="text" id="manual-name" class="input" placeholder="Food name">
+        <input type="number" id="manual-kcal" class="input" placeholder="kcal" inputmode="numeric">
+      </div>
+      <button class="btn" id="btn-manual-add"><svg class="icon"><use href="#i-plus"/></svg> Add</button>
+    </div>
+    <div class="card">
+      <h3>Today's food</h3>
+      <div id="food-log-list"></div>
+    </div>
+  </section>
+
+  <section id="screen-progress" class="screen">
+    <div class="card center-card">
+      <p class="muted">Day streak</p>
+      <p class="big-number" id="progress-streak">0</p>
+      <p class="muted small">Rest days keep the streak alive</p>
+    </div>
+    <div class="card">
+      <h3>Work done this week</h3>
+      <div id="volume-list"></div>
+    </div>
+    <div class="card">
+      <h3>Personal bests</h3>
+      <div id="pr-list"></div>
+    </div>
+    <div class="card">
+      <h3>Last 7 days</h3>
+      <div id="history-list"></div>
+    </div>
+  </section>
+
+  <section id="screen-settings" class="screen">
+    <div class="card">
+      <h3>Daily calorie target</h3>
+      <input type="number" id="set-calorie" class="input" inputmode="numeric" placeholder="2500">
+      <button class="btn" id="btn-save-calorie"><svg class="icon"><use href="#i-check"/></svg> Save target</button>
+    </div>
+    <div class="card">
+      <h3>Looks</h3>
+      <button class="btn" id="btn-theme">
+        <svg class="icon"><use href="#i-sun"/></svg> <span id="theme-label">Switch to light</span>
+      </button>
+    </div>
+    <div class="card">
+      <h3>Backup</h3>
+      <p class="muted small">Save all your data to one file. Keep it somewhere safe. Loading a backup puts everything back.</p>
+      <div class="actions">
+        <button class="btn" id="btn-export"><svg class="icon"><use href="#i-download"/></svg> Save backup file</button>
+      </div>
+      <label class="btn file-btn">
+        <svg class="icon"><use href="#i-upload"/></svg> Load backup file
+        <input type="file" id="import-file" accept="application/json" hidden>
+      </label>
+      <p class="muted small" id="backup-status"></p>
+    </div>
+    <div class="card">
+      <h3>Extra (optional)</h3>
+      <label class="muted small" for="set-usda">USDA food key. Better online food search. Free at fdc.nal.usda.gov/api-key</label>
+      <input type="text" id="set-usda" class="input" placeholder="USDA API key" autocomplete="off">
+      <label class="muted small" for="set-mw">MuscleWiki key. Real demo videos. Free at api.musclewiki.com</label>
+      <input type="text" id="set-mw" class="input" placeholder="MuscleWiki API key" autocomplete="off">
+      <button class="btn" id="btn-save-keys"><svg class="icon"><use href="#i-check"/></svg> Save keys</button>
+    </div>
+    <div class="card">
+      <div class="row"><span>Version</span><strong id="app-version">—</strong></div>
+      <div class="row"><span>Storage</span><strong id="storage-status">—</strong></div>
+    </div>
+  </section>
+
+</main>
+
+<nav class="tabs" id="tabs">
+  <button class="tab active" data-screen="today"><svg class="icon"><use href="#i-home"/></svg><span>Today</span></button>
+  <button class="tab" data-screen="workout"><svg class="icon"><use href="#i-dumbbell"/></svg><span>Gym</span></button>
+  <button class="tab" data-screen="food"><svg class="icon"><use href="#i-bowl"/></svg><span>Food</span></button>
+  <button class="tab" data-screen="progress"><svg class="icon"><use href="#i-chart"/></svg><span>Progress</span></button>
+  <button class="tab" data-screen="settings"><svg class="icon"><use href="#i-gear"/></svg><span>Settings</span></button>
+</nav>
+
+<div class="modal-backdrop hidden" id="demo-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="demo-title">Exercise</h3>
+      <button class="icon-btn" id="demo-close"><svg class="icon"><use href="#i-x"/></svg></button>
+    </div>
+    <div id="demo-body"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/dexie@4.0.8/dist/dexie.min.js"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
