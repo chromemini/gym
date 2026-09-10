@@ -48,8 +48,9 @@ const StorageVault = (() => {
   function openDB() {
     return new Promise((resolve, reject) => {
       if (dbInstance) return resolve(dbInstance);
-      const req = indexedDB.open(DB_NAME, DB_VERSION);
-      req.onupgradeneeded = (e) => {
+      try {
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = (e) => {
         const db = e.target.result;
         if (!db.objectStoreNames.contains('workouts')) {
           const ws = db.createObjectStore('workouts', { keyPath: 'id', autoIncrement: true });
@@ -66,6 +67,9 @@ const StorageVault = (() => {
         resolve(dbInstance);
       };
       req.onerror = () => reject(req.error);
+      } catch (err) {
+        reject(err);
+      }
     });
   }
 
@@ -91,7 +95,11 @@ const StorageVault = (() => {
       }
     },
     clearScratchpad() {
-      localStorage.removeItem(SCRATCHPAD_KEY);
+      try {
+        localStorage.removeItem(SCRATCHPAD_KEY);
+      } catch (err) {
+        console.warn('Scratchpad clear error:', err);
+      }
     },
 
     // Stage 2: IndexedDB Permanent Transactions
