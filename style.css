@@ -1,0 +1,834 @@
+/* ==========================================================================
+   gym.umer.ai v1.01 - ZERO-PIXEL-WASTE MONOCHROMATIC ENGINE
+   Palette: Strictly #000000, #111111, #242424, #757575, #FFFFFF
+   No Emojis. Pure SVGs. 48px Touch Targets. Sub-Modular Density.
+   ========================================================================== */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+:root {
+  --bg-black: #000000;
+  --surface-card: #101010;
+  --surface-hover: #181818;
+  --border-dim: #222222;
+  --border-bright: #444444;
+  --text-primary: #FFFFFF;
+  --text-muted: #7E7E7E;
+  --text-subtle: #4D4D4D;
+  --radius-xs: 3px;
+  --radius-sm: 5px;
+  --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  background-color: var(--bg-black);
+  color: var(--text-primary);
+  font-family: var(--font-stack);
+  font-size: 13px;
+  line-height: 1.25;
+  overflow: hidden;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  width: 100vw;
+  max-width: 520px;
+  margin: 0 auto;
+  background-color: var(--bg-black);
+  position: relative;
+}
+
+/* --------------------------------------------------------------------------
+   TOP STATUS HUD (38px Dense Strip)
+   -------------------------------------------------------------------------- */
+.hud-bar {
+  height: 38px;
+  min-height: 38px;
+  background: #080808;
+  border-bottom: 1px solid var(--border-dim);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+  gap: 6px;
+  z-index: 10;
+}
+
+.hud-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.hud-item.brand {
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  font-size: 12px;
+}
+
+.brand-text {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ver-tag {
+  color: var(--text-muted);
+  font-size: 9px;
+  font-weight: 400;
+}
+
+.streak-capsule {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #121212;
+  border: 1px solid var(--border-dim);
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+}
+
+.matrix-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 4px);
+  gap: 2px;
+  align-items: center;
+}
+
+.matrix-dot {
+  width: 4px;
+  height: 6px;
+  background: #202020;
+  border-radius: 1px;
+}
+
+.matrix-dot.active {
+  background: var(--text-primary);
+}
+
+.macro-capsule {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  line-height: 1.1;
+}
+
+.hud-val {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+}
+
+.hud-sub {
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+.hud-btn {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* --------------------------------------------------------------------------
+   MAIN VIEWPORT
+   -------------------------------------------------------------------------- */
+.main-viewport {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  padding-bottom: 48px; /* space for dock */
+}
+
+.view-tab {
+  display: none;
+  height: 100%;
+}
+
+.view-tab.active {
+  display: flex;
+  flex-direction: column;
+}
+
+/* --------------------------------------------------------------------------
+   ACTIVE WORKSTATION (SINGLE FOLD - NO WASTED PIXELS)
+   -------------------------------------------------------------------------- */
+.active-workstation {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.station-meta-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  background: var(--surface-card);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-sm);
+  padding: 6px;
+}
+
+.visual-loop-box {
+  width: 120px;
+  height: 90px;
+  min-width: 120px;
+  background: #050505;
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-xs);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.biomech-canvas {
+  width: 120px;
+  height: 90px;
+  display: block;
+}
+
+.loop-indicator {
+  position: absolute;
+  bottom: 2px;
+  left: 4px;
+  font-size: 8px;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 1px 3px;
+  border-radius: 2px;
+}
+
+.loop-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  animation: pulse-dot 1.5s infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+.exercise-info-box {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.group-label {
+  font-size: 9px;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.exercise-title {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.form-cue {
+  font-size: 10px;
+  color: var(--text-muted);
+  line-height: 1.2;
+}
+
+.overload-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  background: #181818;
+  border: 1px solid var(--border-bright);
+  padding: 2px 5px;
+  border-radius: var(--radius-xs);
+  color: var(--text-primary);
+}
+
+/* --------------------------------------------------------------------------
+   TACTILE SET LOGGING TABLE
+   -------------------------------------------------------------------------- */
+.sets-table-wrapper {
+  background: var(--surface-card);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.sets-table-header {
+  display: grid;
+  grid-template-columns: 28px 46px 1fr 1fr 50px;
+  align-items: center;
+  background: #151515;
+  border-bottom: 1px solid var(--border-dim);
+  padding: 4px 6px;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.sets-table-header .col-idx,
+.sets-table-header .col-prev {
+  text-align: left;
+}
+
+.sets-rows-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.set-row {
+  display: grid;
+  grid-template-columns: 28px 46px 1fr 1fr 50px;
+  align-items: center;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--border-dim);
+  transition: background 0.15s ease, border-color 0.15s ease;
+  min-height: 44px;
+}
+
+.set-row:last-child {
+  border-bottom: none;
+}
+
+.set-row.is-pr {
+  border-left: 2px solid var(--text-primary);
+  background: #151515;
+}
+
+.set-idx {
+  font-weight: 700;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.set-prev {
+  font-size: 9px;
+  color: var(--text-subtle);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Custom Inline Stepper (Blocks Virtual Keyboard) */
+.stepper-unit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.step-btn {
+  width: 28px;
+  height: 34px;
+  background: #1A1A1A;
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-xs);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.step-btn:active {
+  background: var(--text-primary);
+  color: var(--bg-black);
+}
+
+.step-val {
+  min-width: 38px;
+  text-align: center;
+  font-weight: 800;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.3px;
+}
+
+.done-btn {
+  width: 48px;
+  height: 34px;
+  background: #181818;
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-xs);
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.done-btn.active {
+  background: var(--text-primary);
+  color: var(--bg-black);
+  border-color: var(--text-primary);
+}
+
+/* --------------------------------------------------------------------------
+   STATION ACTIONS & TIMERS
+   -------------------------------------------------------------------------- */
+.station-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.action-btn {
+  height: 38px;
+  min-height: 38px;
+  background: var(--text-primary);
+  color: var(--bg-black);
+  border: none;
+  border-radius: var(--radius-xs);
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.action-btn:active {
+  opacity: 0.85;
+}
+
+.action-btn.secondary {
+  background: #141414;
+  color: var(--text-primary);
+  border: 1px solid var(--border-dim);
+}
+
+.action-btn.secondary:active {
+  background: #222222;
+}
+
+/* --------------------------------------------------------------------------
+   EXERCISE QUEUE (28px COMPACT HORIZONTAL PILLS)
+   -------------------------------------------------------------------------- */
+.queue-section {
+  padding: 2px 8px;
+}
+
+.queue-title {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.queue-scroll {
+  display: flex;
+  gap: 5px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+
+.queue-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.queue-pill {
+  flex: 0 0 auto;
+  height: 28px;
+  padding: 0 8px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-xs);
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.queue-pill.active {
+  background: #242424;
+  color: var(--text-primary);
+  border-color: var(--border-bright);
+}
+
+.queue-pill.completed {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+
+/* --------------------------------------------------------------------------
+   NUTRITION WORKSTATION
+   -------------------------------------------------------------------------- */
+.nutrition-workstation {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.budget-card, .speed-log-card, .food-bank-card, .intake-log-card, .vault-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-sm);
+  padding: 8px;
+}
+
+.budget-row.main-metric {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 6px;
+}
+
+.dim-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+.big-metric {
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+
+.budget-totals {
+  text-align: right;
+  font-size: 10px;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+.budget-totals strong {
+  color: var(--text-primary);
+}
+
+.mono-progress-track {
+  width: 100%;
+  height: 6px;
+  background: #1D1D1D;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.mono-progress-fill {
+  height: 100%;
+  background: var(--text-primary);
+  transition: width 0.2s ease;
+}
+
+.macro-breakdown-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px;
+}
+
+.macro-chip {
+  background: #141414;
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-xs);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+}
+
+.macro-chip span {
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.macro-chip strong {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.card-subtitle {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.speed-btn-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px;
+}
+
+.quick-food-btn {
+  height: 36px;
+  background: #161616;
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-xs);
+  color: var(--text-primary);
+  font-size: 9px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.quick-food-btn:active {
+  background: var(--text-primary);
+  color: var(--bg-black);
+}
+
+.food-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+
+.food-item-btn {
+  height: 42px;
+  background: #141414;
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-xs);
+  color: var(--text-primary);
+  padding: 4px 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: left;
+  cursor: pointer;
+}
+
+.food-item-btn:active {
+  border-color: var(--border-bright);
+}
+
+.food-name {
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.food-macros {
+  font-size: 8px;
+  color: var(--text-muted);
+}
+
+.intake-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.intake-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #121212;
+  padding: 4px 6px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-dim);
+  font-size: 10px;
+}
+
+.intake-del-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.empty-intake-note {
+  font-size: 10px;
+  color: var(--text-subtle);
+  padding: 6px 0;
+  text-align: center;
+}
+
+/* --------------------------------------------------------------------------
+   VAULT & PORTABILITY TAB
+   -------------------------------------------------------------------------- */
+.vault-workstation {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vault-icon-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.vault-icon-header h2 {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+}
+
+.vault-desc {
+  font-size: 10px;
+  color: var(--text-muted);
+  line-height: 1.35;
+  margin-bottom: 8px;
+}
+
+.vault-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.vault-stat {
+  background: #141414;
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-xs);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+}
+
+.vault-stat strong {
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+.vault-buttons-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vault-btn {
+  height: 42px;
+  min-height: 42px;
+  border-radius: var(--radius-xs);
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  touch-action: manipulation;
+  text-decoration: none;
+  border: 1px solid transparent;
+}
+
+.vault-btn.primary {
+  background: var(--text-primary);
+  color: var(--bg-black);
+}
+
+.vault-btn.secondary {
+  background: #181818;
+  color: var(--text-primary);
+  border-color: var(--border-dim);
+}
+
+.vault-btn.danger {
+  background: transparent;
+  color: var(--text-muted);
+  border-color: var(--border-dim);
+}
+
+.vault-btn.danger:active {
+  color: var(--text-primary);
+  border-color: var(--border-bright);
+}
+
+/* --------------------------------------------------------------------------
+   BOTTOM DOCKED NAVIGATION (44px Pure Thumb Height)
+   -------------------------------------------------------------------------- */
+.bottom-dock {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 44px;
+  background: #080808;
+  border-top: 1px solid var(--border-dim);
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  z-index: 20;
+}
+
+.dock-tab {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.dock-tab.active {
+  color: var(--text-primary);
+  background: #111111;
+}
+
+/* SVG helpers */
+.svg-icon {
+  display: inline-block;
+  vertical-align: middle;
+  pointer-events: none;
+}

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="gym.umer.ai - High-density, offline-first, client-side workout and nutrition engine.">
+  <title>gym.umer.ai v1.01</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app" class="app-container">
+    <!-- TOP STATUS HUD (38px Dense Bar) -->
+    <header class="hud-bar" id="hudBar">
+      <div class="hud-item brand">
+        <svg class="svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6.5 6.5h11M6.5 17.5h11M4 10v4M20 10v4M8 4v16M16 4v16"/>
+        </svg>
+        <span class="brand-text">gym.umer.ai <small class="ver-tag">v1.01</small></span>
+      </div>
+      <div class="hud-item streak-capsule" id="hudStreak" title="Monochrome Consistency Matrix">
+        <div class="matrix-grid" id="streakMatrix"></div>
+        <span class="hud-val" id="streakCount">0D</span>
+      </div>
+      <div class="hud-item macro-capsule" id="hudNutritionSummary">
+        <span class="hud-val" id="hudCalories">0/2400 kcal</span>
+        <span class="hud-sub" id="hudProtein">0/180g P</span>
+      </div>
+      <button class="hud-btn" id="btnSyncState" title="Storage Vault Status">
+        <svg class="svg-icon" id="vaultStatusIcon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="9"/>
+          <path d="M12 7v5l3 3"/>
+        </svg>
+      </button>
+    </header>
+
+    <!-- MAIN VIEWPORT CONTAINER -->
+    <main class="main-viewport" id="mainViewport">
+      
+      <!-- WORKOUT WORKSTATION TAB -->
+      <section id="tabWorkout" class="view-tab active">
+        <!-- Active Exercise Workstation (Fits Single Fold) -->
+        <div class="active-workstation" id="activeWorkstation">
+          <div class="station-meta-row">
+            <div class="visual-loop-box">
+              <canvas id="motionCanvas" width="120" height="90" class="biomech-canvas"></canvas>
+              <div class="loop-indicator">
+                <span class="loop-dot"></span> 3.0s FORM
+              </div>
+            </div>
+            <div class="exercise-info-box">
+              <div class="group-label" id="currentMuscleGroup">CHEST</div>
+              <h1 class="exercise-title" id="currentExerciseName">Incline DB Press</h1>
+              <div class="form-cue" id="currentFormCue">30° bench angle. Elbow path tucked at 45°.</div>
+              <div class="overload-badge" id="overloadBanner">
+                <svg class="svg-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+                  <polyline points="17 6 23 6 23 12"/>
+                </svg>
+                <span id="overloadText">TARGET: 30.0kg x 8 reps</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tactile Logging Grid (Inline Steppers - Native Keyboard Inhibited) -->
+          <div class="sets-table-wrapper">
+            <div class="sets-table-header">
+              <span class="col-idx">SET</span>
+              <span class="col-prev">PREV</span>
+              <span class="col-weight">WEIGHT (KG)</span>
+              <span class="col-reps">REPS</span>
+              <span class="col-action">STATE</span>
+            </div>
+            <div class="sets-rows-container" id="setsRowsContainer">
+              <!-- Dynamically Populated Set Rows -->
+            </div>
+          </div>
+
+          <!-- Quick Actions Bar for Active Workstation -->
+          <div class="station-actions">
+            <button class="action-btn" id="btnAddSet">
+              <svg class="svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              ADD SET
+            </button>
+            <button class="action-btn secondary" id="btnRestTimer">
+              <svg class="svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <span id="restTimerDisplay">REST 90s</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Inactive Exercises Horizontal Queue Strip (28px Compact Drawer) -->
+        <div class="queue-section">
+          <div class="queue-title">EXERCISE SELECTION QUEUE (7-PILLARS)</div>
+          <div class="queue-scroll" id="exerciseQueue">
+            <!-- Populated dynamically: 7 Target Groups -->
+          </div>
+        </div>
+      </section>
+
+      <!-- NUTRITION HUB TAB -->
+      <section id="tabNutrition" class="view-tab">
+        <div class="nutrition-workstation">
+          <!-- Daily Budget Progress -->
+          <div class="budget-card">
+            <div class="budget-row main-metric">
+              <div>
+                <span class="dim-label">CALORIES REMAINING</span>
+                <div class="big-metric" id="nutrCalRemaining">2400</div>
+              </div>
+              <div class="budget-totals">
+                <div>TARGET: <strong id="nutrTargetCal">2400</strong></div>
+                <div>CONSUMED: <strong id="nutrConsumedCal">0</strong></div>
+              </div>
+            </div>
+            <!-- Monochrome Segment Bars -->
+            <div class="mono-progress-track">
+              <div class="mono-progress-fill" id="calProgressBar" style="width: 0%;"></div>
+            </div>
+            <div class="macro-breakdown-row">
+              <div class="macro-chip">
+                <span>PROTEIN</span>
+                <strong id="macroP">0 / 180g</strong>
+              </div>
+              <div class="macro-chip">
+                <span>CARBS</span>
+                <strong id="macroC">0 / 260g</strong>
+              </div>
+              <div class="macro-chip">
+                <span>FATS</span>
+                <strong id="macroF">0 / 65g</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Speed Logger Pad (No System Keyboard Popup) -->
+          <div class="speed-log-card">
+            <div class="card-subtitle">SPEED LOGGING BUFFER</div>
+            <div class="speed-btn-row">
+              <button class="quick-food-btn" data-cal="500" data-p="40" data-c="50" data-f="10">+500 KCAL / 40P</button>
+              <button class="quick-food-btn" data-cal="300" data-p="30" data-c="20" data-f="5">+300 KCAL / 30P</button>
+              <button class="quick-food-btn" data-cal="150" data-p="25" data-c="2" data-f="2">+WHEY (25P)</button>
+            </div>
+          </div>
+
+          <!-- Core Whole-Food Dictionary Bank -->
+          <div class="food-bank-card">
+            <div class="card-subtitle">CORE WHOLE-FOOD BANK (TAP TO LOG)</div>
+            <div class="food-grid" id="foodBankGrid">
+              <!-- Dynamically populated from staple list -->
+            </div>
+          </div>
+
+          <!-- Today's Intake Log -->
+          <div class="intake-log-card">
+            <div class="card-subtitle">TODAY'S INTAKE STREAM</div>
+            <div class="intake-list" id="intakeList">
+              <div class="empty-intake-note">No meals recorded today yet.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- BACKUP & SECURITY VAULT TAB -->
+      <section id="tabVault" class="view-tab">
+        <div class="vault-workstation">
+          <div class="vault-card">
+            <div class="vault-icon-header">
+              <svg class="svg-icon" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              <h2>LOCAL ANTI-FRAGILE VAULT</h2>
+            </div>
+            <p class="vault-desc">
+              gym.umer.ai stores 100% of your logs inside browser-native IndexedDB with synchronous double-buffering. Your metrics never touch a 3rd-party remote server.
+            </p>
+
+            <div class="vault-stats-grid">
+              <div class="vault-stat">
+                <span class="dim-label">STORAGE ENGINE</span>
+                <strong>IndexedDB + Sync Buffer</strong>
+              </div>
+              <div class="vault-stat">
+                <span class="dim-label">PERSISTENCE LOCK</span>
+                <strong id="vaultPersistStatus">ACTIVE</strong>
+              </div>
+              <div class="vault-stat">
+                <span class="dim-label">SAVED SETS</span>
+                <strong id="vaultSetsCount">0</strong>
+              </div>
+              <div class="vault-stat">
+                <span class="dim-label">SAVED MEALS</span>
+                <strong id="vaultMealsCount">0</strong>
+              </div>
+            </div>
+
+            <div class="vault-buttons-stack">
+              <button class="vault-btn primary" id="btnExportJSON">
+                <svg class="svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                EXPORT FULL VAULT (JSON)
+              </button>
+              <label class="vault-btn secondary file-input-label">
+                <svg class="svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                RESTORE FROM BACKUP (JSON)
+                <input type="file" id="importFileInput" accept=".json" style="display: none;">
+              </label>
+              <button class="vault-btn danger" id="btnClearCache">
+                <svg class="svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
+                PURGE TODAY'S STAGING BUFFER
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- FIXED THUMB-HEIGHT BOTTOM NAVIGATION (44px Pure Utility) -->
+    <nav class="bottom-dock">
+      <button class="dock-tab active" data-target="tabWorkout">
+        <svg class="svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6.5 6.5h11M6.5 17.5h11M4 10v4M20 10v4M8 4v16M16 4v16"/>
+        </svg>
+        <span>WORKOUT</span>
+      </button>
+      <button class="dock-tab" data-target="tabNutrition">
+        <svg class="svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/>
+          <line x1="6" y1="1" x2="6" y2="4"/>
+          <line x1="10" y1="1" x2="10" y2="4"/>
+          <line x1="14" y1="1" x2="14" y2="4"/>
+        </svg>
+        <span>NUTRITION</span>
+      </button>
+      <button class="dock-tab" data-target="tabVault">
+        <svg class="svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        <span>VAULT</span>
+      </button>
+    </nav>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
