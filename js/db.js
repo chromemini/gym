@@ -1,7 +1,7 @@
 // js/db.js — all data lives here. Dexie.js sits on top of IndexedDB.
 // The rest of the app only talks to this file, never to the database directly.
 
-const APP_VERSION = "1.11";
+const APP_VERSION = "1.12";
 
 // Keys shared with everyone using this app. Paste your keys here once and every
 // user gets them automatically. If a user saves their own key in Settings, that
@@ -163,6 +163,18 @@ async function setSetting(key, value) {
     localStorage.setItem("gym." + key, JSON.stringify(value));
   } catch (e) {}
   await db.settings.put({ key, value });
+}
+
+async function getPin() {
+  return String((await getSetting("deletePin", "")) || "");
+}
+
+async function setPin(pin) {
+  await setSetting("deletePin", String(pin || ""));
+}
+
+async function hasPin() {
+  return !!(await getPin());
 }
 
 async function getDay(date) {
@@ -425,6 +437,9 @@ export {
   updateDay,
   getMuscleWikiKey,
   getUsdaKey,
+  getPin,
+  setPin,
+  hasPin,
   splitIndexFor,
   exercisesForSplit,
   getStreak,

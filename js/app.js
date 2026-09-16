@@ -4,6 +4,7 @@ import * as data from "./db.js";
 import { $, showToast, openDemo, closeDemo, escapeHtml, isPlayableUrl } from "./ui.js";
 import { initFood, renderFood } from "./food.js";
 import { renderProgress } from "./progress.js";
+import { promptPin, promptNewPin } from "./pin.js";
 
 let currentScreen = "today";
 
@@ -167,6 +168,12 @@ async function renderSettings() {
   const theme = await data.getSetting("theme", "dark");
   $("theme-label").textContent = theme === "dark" ? "Switch to light" : "Switch to dark";
 
+  const pin = await data.getPin();
+  $("pin-status").textContent = pin
+    ? "PIN is set. Deleting requires the code."
+    : "No PIN set — deletes happen without a code.";
+  $("pin-btn-label").textContent = pin ? "Change PIN" : "Set PIN";
+
   let status = "normal";
   if (navigator.storage && navigator.storage.persisted) {
     try {
@@ -179,6 +186,28 @@ async function renderSettings() {
 async function ensureTheme() {
   const theme = await data.getSetting("theme", "dark");
   document.body.classList.toggle("light", theme === "light");
+}
+
+async function maybePromptForPin() {
+  if (await data.hasPin()) return;
+  if (await data.getSetting("pinPrompted", false)) return;
+  await data.setSetting("pinPrompted", true);
+  const pin = await promptNewPin();
+  if (pin) showToast("PIN set. You're protected.");
+}
+
+async function confirmDelete(what) {
+  const pin = await data.getPin();
+  if (!pin) {
+    return confirm(
+      "Delete " + what + "?\n\nTip: set a PIN in Settings to protect against accidental deletes."
+    );
+  }
+  return promptPin({
+    title: "Confirm delete",
+    hint: "Enter your PIN to delete " + what + ".",
+    expected: pin
+  });
 }
 
 function bindNavigation() {
@@ -210,7 +239,7 @@ function bindWorkout() {
     const delEx = e.target.closest(".del-ex-btn");
     if (delEx) {
       const id = parseInt(delEx.dataset.delEx, 10);
-      if (!confirm("Delete this exercise and all its saved sets?")) return;
+      if (!(await confirmDelete("this exercise and all its sets"))) return;
       try {
         await data.deleteExercise(id);
         showToast("Exercise removed");
@@ -222,6 +251,7 @@ function bindWorkout() {
     }
     const delCat = e.target.closest("[data-del-cat]");
     if (delCat) {
+      if (!(await confirmDelete("this category"))) return;
       try {
         await data.deleteCategory(parseInt(delCat.dataset.delCat, 10));
         showToast("Category removed");
@@ -359,6 +389,14 @@ function bindSettings() {
     $("theme-label").textContent = next === "dark" ? "Switch to light" : "Switch to dark";
   });
 
+  $("btn-set-pin").addEventListener("click", async () => {
+    const pin = await promptNewPin();
+    if (pin) {
+      showToast("PIN saved");
+      await renderSettings();
+    }
+  });
+
   $("btn-save-keys").addEventListener("click", async () => {
     await data.setSetting("usdaKey", $("set-usda").value.trim());
     await data.setSetting("musclewikiKey", $("set-mw").value.trim());
@@ -395,6 +433,7 @@ async function init() {
   await data.seedAll();
   $("app-version-top").textContent = "v" + data.APP_VERSION;
   await ensureTheme();
+  await maybePromptForPin();
 
   if (navigator.storage && navigator.storage.persist) {
     try {

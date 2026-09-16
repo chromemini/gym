@@ -165,6 +165,13 @@
       </button>
     </div>
     <div class="card">
+      <h3>Delete PIN</h3>
+      <p class="muted small" id="pin-status">—</p>
+      <button class="btn" id="btn-set-pin" style="margin-top:10px">
+        <svg class="icon"><use href="#i-check"/></svg> <span id="pin-btn-label">Set PIN</span>
+      </button>
+    </div>
+    <div class="card">
       <h3>Backup</h3>
       <p class="muted small">Save all your data to one file. Keep it somewhere safe. Loading a backup puts everything back.</p>
       <div class="actions">
@@ -238,6 +245,23 @@
     <div class="actions">
       <button class="btn primary" id="btn-save-cat"><svg class="icon"><use href="#i-check"/></svg> Save category</button>
     </div>
+  </div>
+</div>
+
+<div class="modal-backdrop hidden" id="pin-modal">
+  <div class="modal pin-modal">
+    <div class="modal-head">
+      <h3 id="pin-title">Enter PIN</h3>
+      <button class="icon-btn" id="pin-close" aria-label="Close"><svg class="icon"><use href="#i-x"/></svg></button>
+    </div>
+    <p class="muted small pin-hint" id="pin-hint"></p>
+    <div class="pin-inputs" id="pin-inputs">
+      <input type="password" class="pin-cell" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="PIN digit 1">
+      <input type="password" class="pin-cell" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="PIN digit 2">
+      <input type="password" class="pin-cell" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="PIN digit 3">
+      <input type="password" class="pin-cell" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="PIN digit 4">
+    </div>
+    <p class="pin-error" id="pin-error" role="alert"></p>
   </div>
 </div>
 
