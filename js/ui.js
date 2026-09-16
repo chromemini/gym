@@ -28,72 +28,16 @@ export function closeDemo() {
   $("demo-modal").classList.add("hidden");
 }
 
-let exerciseDbPromise = null;
-
-function loadExerciseDb() {
-  if (exerciseDbPromise) return exerciseDbPromise;
-  exerciseDbPromise = (async () => {
-    const CACHE_KEY = "gym.exdb.v1";
-    const CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
-    try {
-      const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
-      if (cached && cached.t && Date.now() - cached.t < CACHE_TTL && Array.isArray(cached.d)) {
-        return cached.d;
-      }
-    } catch (e) {}
-    try {
-      const res = await fetch(
-        "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/dist/exercises.json"
-      );
-      if (!res.ok) return [];
-      const data = await res.json();
-      try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), d: data }));
-      } catch (e) {}
-      return Array.isArray(data) ? data : [];
-    } catch (e) {
-      return [];
-    }
-  })();
-  return exerciseDbPromise;
-}
-
-function normalize(s) {
-  return String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-}
-
-function findExerciseMedia(list, name) {
-  if (!list || !list.length) return null;
-  const target = normalize(name);
-  const targetTokens = target.split(" ").filter(Boolean);
-  if (!targetTokens.length) return null;
-  let best = null;
-  let bestScore = 0;
-  for (const ex of list) {
-    const n = normalize(ex.name);
-    if (n === target) return ex;
-    const tokens = n.split(" ");
-    let overlap = 0;
-    for (const t of targetTokens) if (tokens.includes(t)) overlap++;
-    const score = overlap / Math.max(targetTokens.length, tokens.length);
-    if (score > bestScore) {
-      bestScore = score;
-      best = ex;
-    }
-  }
-  return bestScore >= 0.4 ? best : null;
-}
-
-function mediaUrls(ex) {
-  if (!ex || !Array.isArray(ex.images) || !ex.images.length) return [];
-  return ex.images.map(
-    (p) => "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/" + p
-  );
-}
-
-export async function openDemo({ name, notes, videoUrl, onSave }) {
-  $("demo-title").textContent = name;
+export async function openDemo({ name, notes, videoUrl, onSave } = {}) {
+  const titleEl = $("demo-title");
   const body = $("demo-body");
+  const modal = $("demo-modal");
+  if (!titleEl || !body || !modal) return;
+  name = name || "Exercise";
+  notes = notes || "";
+  videoUrl = videoUrl || "";
+  if (typeof onSave !== "function") onSave = async () => {};
+  titleEl.textContent = name;
 
   let videosHtml = "";
   if (videoUrl) {
@@ -111,8 +55,7 @@ export async function openDemo({ name, notes, videoUrl, onSave }) {
   }
 
   body.innerHTML = `
-    <div id="demo-gif-wrap"></div>
-    ${videosHtml || `<p class="muted small">No saved video yet. The animation above loads automatically.</p>`}
+    ${videosHtml || `<p class="muted small">No saved video yet. Paste a link below to keep it here.</p>`}
     ${notes ? `<div class="demo-notes"><h4>How to do it</h4><p>${escapeHtml(notes)}</p></div>` : ""}
     <div class="grid-2">
       <input type="url" class="input" id="demo-url" placeholder="Paste video link" value="${videoUrl ? escapeHtml(videoUrl) : ""}">
@@ -123,34 +66,23 @@ export async function openDemo({ name, notes, videoUrl, onSave }) {
       <a class="btn" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query=${encodeURIComponent(name + " proper form")}"><svg class="icon"><use href="#i-video"/></svg> Search YouTube</a>
     </div>`;
 
-  $("demo-save").onclick = async () => {
-    const url = $("demo-url").value.trim();
-    await onSave(url);
-    if (url) {
-      try {
-        const list = JSON.parse(localStorage.getItem(cacheKey) || "[]");
-        if (!list.includes(url)) list.push(url);
-        localStorage.setItem(cacheKey, JSON.stringify(list));
-      } catch (e) {}
-    }
-    closeDemo();
-  };
-
-  $("demo-modal").classList.remove("hidden");
-
-  const gifWrap = $("demo-gif-wrap");
-  gifWrap.innerHTML = `<p class="muted small">Loading demonstration…</p>`;
-  const list = await loadExerciseDb();
-  const match = findExerciseMedia(list, name);
-  const urls = mediaUrls(match);
-  if (urls.length) {
-    gifWrap.innerHTML = urls
-      .map(
-        (u) =>
-          `<img class="demo-video" src="${escapeHtml(u)}" alt="${escapeHtml(match.name)} demonstration" loading="lazy">`
-      )
-      .join("");
-  } else {
-    gifWrap.innerHTML = `<p class="muted small">No demonstration found for this exercise.</p>`;
+  const saveBtn = $("demo-save");
+  const urlInput = $("demo-url");
+  if (saveBtn && urlInput) {
+    saveBtn.onclick = async () => {
+      const url = urlInput.value.trim();
+      try { await onSave(url); } catch (e) {}
+      if (url) {
+        try {
+          const list = JSON.parse(localStorage.getItem(cacheKey) || "[]");
+          if (!Array.isArray(list)) list = [];
+          if (!list.includes(url)) list.push(url);
+          localStorage.setItem(cacheKey, JSON.stringify(list));
+        } catch (e) {}
+      }
+      closeDemo();
+    };
   }
+
+  modal.classList.remove("hidden");
 }

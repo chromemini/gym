@@ -1,6 +1,6 @@
 // sw.js — service worker. Keeps the app shell cached so the app opens with zero internet.
 
-const CACHE = "gym-umer-ai-v1.07";
+const CACHE = "gym-umer-ai-v1.09";
 
 const ASSETS = [
   "./",
@@ -15,24 +15,6 @@ const ASSETS = [
   "./icon.svg",
   "https://cdn.jsdelivr.net/npm/dexie@4.0.8/dist/dexie.min.js"
 ];
-
-self.addEventListener("fetch", (e) => {
-  const url = new URL(e.request.url);
-  if (url.hostname === "cdn.jsdelivr.net" && url.pathname.includes("free-exercise-db")) {
-    e.respondWith(
-      caches.open(CACHE).then((c) =>
-        c.match(e.request).then(
-          (hit) =>
-            hit ||
-            fetch(e.request).then((res) => {
-              c.put(e.request, res.clone());
-              return res;
-            })
-        )
-      )
-    );
-  }
-});
 
 self.addEventListener("install", (e) => {
   e.waitUntil(
