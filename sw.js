@@ -1,6 +1,6 @@
 // sw.js — service worker. Keeps the app shell cached so the app opens with zero internet.
 
-const CACHE = "gym-umer-ai-v1.04";
+const CACHE = "gym-umer-ai-v1.05";
 
 const ASSETS = [
   "./",

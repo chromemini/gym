@@ -28,7 +28,7 @@ export function closeDemo() {
   $("demo-modal").classList.add("hidden");
 }
 
-export async function openDemo({ name, notes, videoUrl, mwKey, onSave }) {
+export async function openDemo({ name, notes, videoUrl, onSave }) {
   $("demo-title").textContent = name;
   const body = $("demo-body");
 
@@ -55,55 +55,23 @@ export async function openDemo({ name, notes, videoUrl, mwKey, onSave }) {
       <button class="btn" id="demo-save"><svg class="icon"><use href="#i-check"/></svg> Save link</button>
     </div>
     <div class="actions">
-      <p class="muted small">Tap below to load MuscleWiki videos for this exercise. If a video opens, copy its link and paste it in the box above to save it.</p>
-      <button class="btn" id="demo-mw"><svg class="icon"><use href="#i-video"/></svg> Load MuscleWiki videos</button>
-      <a class="btn" target="_blank" rel="noopener" href="https://www.google.com/search?q=${encodeURIComponent(name + " form MuscleWiki")}">Search on Google</a>
-    </div>
-    <div id="demo-mw-list"></div>`;
+      <p class="muted small">MuscleWiki blocks web apps from loading its videos directly. Search below, then paste the video link in the box above — it's saved here for next time.</p>
+      <a class="btn" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query=${encodeURIComponent(name + " proper form")}"><svg class="icon"><use href="#i-video"/></svg> Search YouTube</a>
+      <a class="btn" target="_blank" rel="noopener" href="https://www.google.com/search?q=${encodeURIComponent(name + " MuscleWiki")}">Search Google</a>
+    </div>`;
 
   $("demo-save").onclick = async () => {
     const url = $("demo-url").value.trim();
     await onSave(url);
+    if (url) {
+      try {
+        const list = JSON.parse(localStorage.getItem(cacheKey) || "[]");
+        if (!list.includes(url)) list.push(url);
+        localStorage.setItem(cacheKey, JSON.stringify(list));
+      } catch (e) {}
+    }
     closeDemo();
   };
 
-  const mwBtn = $("demo-mw");
-  if (mwBtn) {
-    mwBtn.onclick = async () => {
-      const listEl = $("demo-mw-list");
-      listEl.textContent = "Loading...";
-      try {
-        const res = await fetch(
-          "https://api.musclewiki.com/search?q=" + encodeURIComponent(name) + "&limit=3",
-          { headers: { "X-API-Key": mwKey } }
-        );
-        if (!res.ok) throw new Error("api said no");
-        const data = await res.json();
-        const items = Array.isArray(data) ? data : data.results || [];
-        const urls = [];
-        for (const it of items) {
-          for (const v of it.videos || []) {
-            const u = v && (v.url || v.video);
-            if (u) urls.push(u);
-          }
-        }
-        const uniq = [...new Set(urls)].slice(0, 4);
-        if (!uniq.length) {
-          listEl.textContent = "No videos found for this exercise.";
-          return;
-        }
-        try {
-          localStorage.setItem(cacheKey, JSON.stringify(uniq));
-        } catch (e) {}
-        listEl.innerHTML = uniq
-          .map((u) => `<video class="demo-video" controls playsinline src="${escapeHtml(u)}"></video>`)
-          .join("");
-      } catch (err) {
-        listEl.textContent = "Could not load videos. Check your key and internet.";
-      }
-    };
-  }
-
   $("demo-modal").classList.remove("hidden");
-  if (mwBtn) mwBtn.click();
 }

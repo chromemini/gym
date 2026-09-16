@@ -58,9 +58,52 @@ body {
 }
 
 .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: -0.03em;
+  min-width: 0;
+}
+
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #6d6dff 0%, #b06dff 55%, #ff6db0 100%);
+  color: #fff;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset,
+    0 4px 16px rgba(140, 90, 255, 0.45);
+}
+
+.brand-mark .icon { width: 17px; height: 17px; stroke-width: 2.4; }
+
+.brand-text {
+  background: linear-gradient(120deg, var(--text) 25%, var(--muted) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  white-space: nowrap;
+}
+
+.brand-ver {
+  font-size: 10px;
   font-weight: 700;
-  font-size: 17px;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: var(--surface2);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  flex-shrink: 0;
 }
 
 .streak-badge {

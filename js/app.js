@@ -128,12 +128,10 @@ async function renderWorkout() {
 async function openDemoModal(exId) {
   const ex = await data.db.exercises.get(exId);
   const videoUrl = await data.getSetting("video:" + exId, "");
-  const mwKey = await data.getMuscleWikiKey();
   await openDemo({
     name: ex.name,
     notes: data.FORM_NOTES[ex.name] || "",
     videoUrl,
-    mwKey,
     onSave: async (url) => {
       await data.setSetting("video:" + exId, url);
       showToast(url ? "Video link saved" : "Video link cleared");
@@ -285,6 +283,7 @@ function bindSettings() {
 
 async function init() {
   await data.seedAll();
+  $("app-version-top").textContent = "v" + data.APP_VERSION;
   await ensureTheme();
 
   if (navigator.storage && navigator.storage.persist) {
