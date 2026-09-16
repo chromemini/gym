@@ -28,28 +28,67 @@ export function closeDemo() {
   $("demo-modal").classList.add("hidden");
 }
 
-const GIF_CACHE = {};
+let exerciseDbPromise = null;
 
-async function fetchExerciseGif(name) {
-  const key = name.toLowerCase().replace(/[^a-z0-9]/g, "");
-  if (GIF_CACHE[key] !== undefined) return GIF_CACHE[key];
-  try {
-    const res = await fetch(
-      "https://oss.exercisedb.dev/api/v1/exercises?name=" + encodeURIComponent(name)
-    );
-    if (!res.ok) return null;
-    const json = await res.json();
-    const list = Array.isArray(json) ? json : json.data || json.exercises || [];
-    if (!list.length) return null;
-    const match =
-      list.find((e) => (e.name || "").toLowerCase() === name.toLowerCase()) || list[0];
-    const url = match.gifUrl || match.gif || null;
-    GIF_CACHE[key] = url;
-    return url;
-  } catch (e) {
-    GIF_CACHE[key] = null;
-    return null;
+function loadExerciseDb() {
+  if (exerciseDbPromise) return exerciseDbPromise;
+  exerciseDbPromise = (async () => {
+    const CACHE_KEY = "gym.exdb.v1";
+    const CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
+    try {
+      const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
+      if (cached && cached.t && Date.now() - cached.t < CACHE_TTL && Array.isArray(cached.d)) {
+        return cached.d;
+      }
+    } catch (e) {}
+    try {
+      const res = await fetch(
+        "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/dist/exercises.json"
+      );
+      if (!res.ok) return [];
+      const data = await res.json();
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), d: data }));
+      } catch (e) {}
+      return Array.isArray(data) ? data : [];
+    } catch (e) {
+      return [];
+    }
+  })();
+  return exerciseDbPromise;
+}
+
+function normalize(s) {
+  return String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function findExerciseMedia(list, name) {
+  if (!list || !list.length) return null;
+  const target = normalize(name);
+  const targetTokens = target.split(" ").filter(Boolean);
+  if (!targetTokens.length) return null;
+  let best = null;
+  let bestScore = 0;
+  for (const ex of list) {
+    const n = normalize(ex.name);
+    if (n === target) return ex;
+    const tokens = n.split(" ");
+    let overlap = 0;
+    for (const t of targetTokens) if (tokens.includes(t)) overlap++;
+    const score = overlap / Math.max(targetTokens.length, tokens.length);
+    if (score > bestScore) {
+      bestScore = score;
+      best = ex;
+    }
   }
+  return bestScore >= 0.4 ? best : null;
+}
+
+function mediaUrls(ex) {
+  if (!ex || !Array.isArray(ex.images) || !ex.images.length) return [];
+  return ex.images.map(
+    (p) => "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/" + p
+  );
 }
 
 export async function openDemo({ name, notes, videoUrl, onSave }) {
@@ -100,10 +139,18 @@ export async function openDemo({ name, notes, videoUrl, onSave }) {
   $("demo-modal").classList.remove("hidden");
 
   const gifWrap = $("demo-gif-wrap");
-  const gifUrl = await fetchExerciseGif(name);
-  if (gifUrl) {
-    gifWrap.innerHTML = `<img class="demo-video" src="${escapeHtml(gifUrl)}" alt="${escapeHtml(name)} demonstration" loading="lazy">`;
+  gifWrap.innerHTML = `<p class="muted small">Loading demonstration…</p>`;
+  const list = await loadExerciseDb();
+  const match = findExerciseMedia(list, name);
+  const urls = mediaUrls(match);
+  if (urls.length) {
+    gifWrap.innerHTML = urls
+      .map(
+        (u) =>
+          `<img class="demo-video" src="${escapeHtml(u)}" alt="${escapeHtml(match.name)} demonstration" loading="lazy">`
+      )
+      .join("");
   } else {
-    gifWrap.innerHTML = `<p class="muted small">No GIF found for this exercise.</p>`;
+    gifWrap.innerHTML = `<p class="muted small">No demonstration found for this exercise.</p>`;
   }
 }
