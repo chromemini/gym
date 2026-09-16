@@ -1,7 +1,7 @@
 // js/db.js — all data lives here. Dexie.js sits on top of IndexedDB.
 // The rest of the app only talks to this file, never to the database directly.
 
-const APP_VERSION = "1.08";
+const APP_VERSION = "1.09";
 
 // Keys shared with everyone using this app. Paste your keys here once and every
 // user gets them automatically. If a user saves their own key in Settings, that

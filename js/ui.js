@@ -28,6 +28,33 @@ export function closeDemo() {
   $("demo-modal").classList.add("hidden");
 }
 
+function mediaType(url) {
+  if (!url || typeof url !== "string") return null;
+  const u = url.trim();
+  if (!u) return null;
+  const yt = /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/i.exec(u);
+  if (yt) return { kind: "yt", id: yt[1] };
+  if (/\.(mp4|webm|ogg|ogv|mov|m4v)(\?|#|$)/i.test(u)) return { kind: "video" };
+  if (/\.(gif|png|jpe?g|webp|avif)(\?|#|$)/i.test(u)) return { kind: "image" };
+  return null;
+}
+
+function renderMedia(url) {
+  const t = mediaType(url);
+  if (!t) return "";
+  if (t.kind === "yt") {
+    return `<iframe class="demo-video" src="https://www.youtube.com/embed/${t.id}" title="Exercise demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>`;
+  }
+  if (t.kind === "video") {
+    return `<video class="demo-video" controls playsinline src="${escapeHtml(url)}"></video>`;
+  }
+  return `<img class="demo-video" src="${escapeHtml(url)}" alt="Exercise demonstration" loading="lazy">`;
+}
+
+export function isPlayableUrl(url) {
+  return !!mediaType(url);
+}
+
 export async function openDemo({ name, notes, videoUrl, onSave } = {}) {
   const titleEl = $("demo-title");
   const body = $("demo-body");
@@ -39,30 +66,25 @@ export async function openDemo({ name, notes, videoUrl, onSave } = {}) {
   if (typeof onSave !== "function") onSave = async () => {};
   titleEl.textContent = name;
 
-  let videosHtml = "";
-  if (videoUrl) {
-    videosHtml += `<video class="demo-video" controls playsinline src="${escapeHtml(videoUrl)}"></video>`;
-  }
-  const cacheKey = "gym.demo." + name;
+  const cacheKey = "gym.demo.v2." + name;
+  let videosHtml = renderMedia(videoUrl);
   let cached = null;
   try {
     cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
   } catch (e) {}
-  if (cached && cached.length) {
-    videosHtml += cached
-      .map((u) => `<video class="demo-video" controls playsinline src="${escapeHtml(u)}"></video>`)
-      .join("");
+  if (Array.isArray(cached) && cached.length) {
+    videosHtml += cached.map(renderMedia).join("");
   }
 
   body.innerHTML = `
-    ${videosHtml || `<p class="muted small">No saved video yet. Paste a link below to keep it here.</p>`}
+    ${videosHtml || `<p class="muted small">No video saved yet. Search YouTube below and paste the link — it will play right here, every time.</p>`}
     ${notes ? `<div class="demo-notes"><h4>How to do it</h4><p>${escapeHtml(notes)}</p></div>` : ""}
     <div class="grid-2">
-      <input type="url" class="input" id="demo-url" placeholder="Paste video link" value="${videoUrl ? escapeHtml(videoUrl) : ""}">
+      <input type="url" class="input" id="demo-url" placeholder="YouTube or .mp4 link" value="${videoUrl ? escapeHtml(videoUrl) : ""}">
       <button class="btn" id="demo-save"><svg class="icon"><use href="#i-check"/></svg> Save link</button>
     </div>
     <div class="actions">
-      <p class="muted small">Need a video walkthrough? Search YouTube below and paste the link above to save it for this exercise.</p>
+      <p class="muted small">YouTube, .mp4, .webm, or .gif links all play inline. Once saved, they stay on this exercise.</p>
       <a class="btn" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query=${encodeURIComponent(name + " proper form")}"><svg class="icon"><use href="#i-video"/></svg> Search YouTube</a>
     </div>`;
 
@@ -71,12 +93,16 @@ export async function openDemo({ name, notes, videoUrl, onSave } = {}) {
   if (saveBtn && urlInput) {
     saveBtn.onclick = async () => {
       const url = urlInput.value.trim();
+      if (url && !isPlayableUrl(url)) {
+        if (!confirm("This link doesn't look like a YouTube, video, or gif link. Save anyway?")) return;
+      }
       try { await onSave(url); } catch (e) {}
-      if (url) {
+      if (url && isPlayableUrl(url)) {
         try {
-          const list = JSON.parse(localStorage.getItem(cacheKey) || "[]");
+          let list = JSON.parse(localStorage.getItem(cacheKey) || "[]");
           if (!Array.isArray(list)) list = [];
           if (!list.includes(url)) list.push(url);
+          list = list.slice(-5);
           localStorage.setItem(cacheKey, JSON.stringify(list));
         } catch (e) {}
       }

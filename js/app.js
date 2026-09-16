@@ -1,7 +1,7 @@
 // js/app.js — screens: Today, Gym, Settings. Loads the app and connects everything.
 
 import * as data from "./db.js";
-import { $, showToast, openDemo, closeDemo, escapeHtml } from "./ui.js";
+import { $, showToast, openDemo, closeDemo, escapeHtml, isPlayableUrl } from "./ui.js";
 import { initFood, renderFood } from "./food.js";
 import { renderProgress } from "./progress.js";
 
@@ -127,7 +127,8 @@ async function renderWorkout() {
 
 async function openDemoModal(exId) {
   const ex = await data.db.exercises.get(exId);
-  const videoUrl = await data.getSetting("video:" + exId, "");
+  let videoUrl = await data.getSetting("video:" + exId, "");
+  if (videoUrl && !isPlayableUrl(videoUrl)) videoUrl = "";
   await openDemo({
     name: ex.name,
     notes: data.FORM_NOTES[ex.name] || "",

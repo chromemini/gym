@@ -421,11 +421,16 @@ label.muted { display: block; margin: 10px 0 6px; }
 
 .demo-video {
   width: 100%;
+  aspect-ratio: 16 / 9;
   border-radius: 12px;
   background: #000;
   margin-bottom: 10px;
   display: block;
+  object-fit: cover;
+  border: 0;
 }
+
+img.demo-video { object-fit: contain; background: var(--surface2); }
 
 .demo-notes { margin: 12px 0; }
 
