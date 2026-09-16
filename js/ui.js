@@ -28,6 +28,30 @@ export function closeDemo() {
   $("demo-modal").classList.add("hidden");
 }
 
+const GIF_CACHE = {};
+
+async function fetchExerciseGif(name) {
+  const key = name.toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (GIF_CACHE[key] !== undefined) return GIF_CACHE[key];
+  try {
+    const res = await fetch(
+      "https://oss.exercisedb.dev/api/v1/exercises?name=" + encodeURIComponent(name)
+    );
+    if (!res.ok) return null;
+    const json = await res.json();
+    const list = Array.isArray(json) ? json : json.data || json.exercises || [];
+    if (!list.length) return null;
+    const match =
+      list.find((e) => (e.name || "").toLowerCase() === name.toLowerCase()) || list[0];
+    const url = match.gifUrl || match.gif || null;
+    GIF_CACHE[key] = url;
+    return url;
+  } catch (e) {
+    GIF_CACHE[key] = null;
+    return null;
+  }
+}
+
 export async function openDemo({ name, notes, videoUrl, onSave }) {
   $("demo-title").textContent = name;
   const body = $("demo-body");
@@ -48,16 +72,16 @@ export async function openDemo({ name, notes, videoUrl, onSave }) {
   }
 
   body.innerHTML = `
-    ${videosHtml || `<p class="muted small">No video saved yet. Paste a video link below, or use the MuscleWiki button.</p>`}
+    <div id="demo-gif-wrap"></div>
+    ${videosHtml || `<p class="muted small">No saved video yet. The animation above loads automatically.</p>`}
     ${notes ? `<div class="demo-notes"><h4>How to do it</h4><p>${escapeHtml(notes)}</p></div>` : ""}
     <div class="grid-2">
       <input type="url" class="input" id="demo-url" placeholder="Paste video link" value="${videoUrl ? escapeHtml(videoUrl) : ""}">
       <button class="btn" id="demo-save"><svg class="icon"><use href="#i-check"/></svg> Save link</button>
     </div>
     <div class="actions">
-      <p class="muted small">MuscleWiki blocks web apps from loading its videos directly. Search below, then paste the video link in the box above — it's saved here for next time.</p>
+      <p class="muted small">Need a video walkthrough? Search YouTube below and paste the link above to save it for this exercise.</p>
       <a class="btn" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query=${encodeURIComponent(name + " proper form")}"><svg class="icon"><use href="#i-video"/></svg> Search YouTube</a>
-      <a class="btn" target="_blank" rel="noopener" href="https://www.google.com/search?q=${encodeURIComponent(name + " MuscleWiki")}">Search Google</a>
     </div>`;
 
   $("demo-save").onclick = async () => {
@@ -74,4 +98,12 @@ export async function openDemo({ name, notes, videoUrl, onSave }) {
   };
 
   $("demo-modal").classList.remove("hidden");
+
+  const gifWrap = $("demo-gif-wrap");
+  const gifUrl = await fetchExerciseGif(name);
+  if (gifUrl) {
+    gifWrap.innerHTML = `<img class="demo-video" src="${escapeHtml(gifUrl)}" alt="${escapeHtml(name)} demonstration" loading="lazy">`;
+  } else {
+    gifWrap.innerHTML = `<p class="muted small">No GIF found for this exercise.</p>`;
+  }
 }
