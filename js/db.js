@@ -1,7 +1,7 @@
 // js/db.js — all data lives here. Dexie.js sits on top of IndexedDB.
 // The rest of the app only talks to this file, never to the database directly.
 
-const APP_VERSION = "1.09";
+const APP_VERSION = "1.11";
 
 // Keys shared with everyone using this app. Paste your keys here once and every
 // user gets them automatically. If a user saves their own key in Settings, that
@@ -86,6 +86,15 @@ db.version(1).stores({
   days: "&date",
   settings: "&key"
 });
+db.version(2).stores({
+  exercises: "++id, &name, categoryId, orderIndex",
+  sets: "++id, date, exerciseId, [date+exerciseId]",
+  foods: "++id, &name",
+  foodLog: "++id, date",
+  days: "&date",
+  settings: "&key",
+  categories: "++id, &name, orderIndex"
+});
 
 function addDays(date, n) {
   const d = new Date(date);
@@ -105,16 +114,35 @@ function todayKey() {
 }
 
 async function seedAll() {
+  let cats = await db.categories.toArray();
+  if (cats.length === 0) {
+    await db.categories.bulkAdd(SPLIT.map((s, i) => ({ name: s.name, orderIndex: i })));
+    cats = await db.categories.toArray();
+  }
+  cats.sort((a, b) => a.orderIndex - b.orderIndex);
+
+  // migrate any pre-v2 exercises that only had splitIndex
+  const exs = await db.exercises.toArray();
+  for (const ex of exs) {
+    if (typeof ex.categoryId !== "number" && typeof ex.splitIndex === "number") {
+      const cat = cats[ex.splitIndex];
+      if (cat) await db.exercises.update(ex.id, { categoryId: cat.id });
+    }
+  }
+
   const exCount = await db.exercises.count();
   if (exCount === 0) {
     const rows = [];
-    SPLIT.forEach((day, i) => {
-      day.exercises.forEach((name, j) => {
-        rows.push({ name, splitIndex: i, orderIndex: j });
+    for (const cat of cats) {
+      const def = SPLIT.find((s) => s.name === cat.name);
+      if (!def) continue;
+      def.exercises.forEach((name, j) => {
+        rows.push({ name, categoryId: cat.id, orderIndex: j });
       });
-    });
+    }
     await db.exercises.bulkAdd(rows);
   }
+
   const foodCount = await db.foods.count();
   if (foodCount === 0) {
     await db.foods.bulkAdd(SEED_FOODS.map((f) => ({ ...f, source: "seed" })));
@@ -156,6 +184,30 @@ async function getUsdaKey() {
   return (await getSetting("usdaKey", "")) || EMBEDDED_USDA_KEY;
 }
 
+// Kept for API stability. Returns the day-rotation index into the categories
+// list (0..catCount-1) so any external caller still gets a sane value.
+async function splitIndexFor(date) {
+  const anchor = await getSetting("planAnchor", null);
+  if (!anchor) {
+    await setSetting("planAnchor", date);
+    return 0;
+  }
+  const diff = Math.floor(
+    (new Date(date + "T00:00:00") - new Date(anchor + "T00:00:00")) / 86400000
+  );
+  const catCount = (await db.categories.count()) || 1;
+  return ((diff % catCount) + catCount) % catCount;
+}
+
+// Kept for API stability. Returns exercises belonging to the Nth category,
+// sorted by their order within that category.
+async function exercisesForSplit(idx) {
+  const cats = await allCategories();
+  const cat = cats[idx];
+  if (!cat) return [];
+  return db.exercises.where("categoryId").equals(cat.id).sortBy("orderIndex");
+}
+
 async function getStreak() {
   const days = await db.days.toArray();
   const map = new Map(days.map((d) => [d.date, d]));
@@ -178,28 +230,51 @@ async function getStreak() {
 }
 
 async function allExercises() {
+  const cats = await allCategories();
+  const catOrder = new Map(cats.map((c, i) => [c.id, i]));
   const all = await db.exercises.toArray();
-  return all.sort(
-    (a, b) => a.splitIndex - b.splitIndex || a.orderIndex - b.orderIndex
-  );
+  return all.sort((a, b) => {
+    const ca = catOrder.has(a.categoryId) ? catOrder.get(a.categoryId) : 999;
+    const cb = catOrder.has(b.categoryId) ? catOrder.get(b.categoryId) : 999;
+    return ca - cb || (a.orderIndex || 0) - (b.orderIndex || 0);
+  });
 }
 
-async function splitIndexFor(date) {
-  const day = await db.days.get(date);
-  if (day && typeof day.splitIndex === "number") return day.splitIndex;
-  const anchor = await getSetting("planAnchor", null);
-  if (!anchor) {
-    await setSetting("planAnchor", date);
-    return 0;
-  }
-  const diff = Math.floor(
-    (new Date(date + "T00:00:00") - new Date(anchor + "T00:00:00")) / 86400000
-  );
-  return ((diff % 7) + 7) % 7;
+async function allCategories() {
+  const all = await db.categories.toArray();
+  return all.sort((a, b) => a.orderIndex - b.orderIndex);
 }
 
-async function exercisesForSplit(idx) {
-  return db.exercises.where("splitIndex").equals(idx).sortBy("orderIndex");
+async function addCategory(name) {
+  name = (name || "").trim();
+  if (!name) throw new Error("Name required");
+  const existing = await db.categories.where("name").equals(name).first();
+  if (existing) throw new Error("That category already exists");
+  const count = await db.categories.count();
+  return db.categories.add({ name, orderIndex: count });
+}
+
+async function deleteCategory(id) {
+  const exCount = await db.exercises.where("categoryId").equals(id).count();
+  if (exCount > 0) throw new Error("Remove its exercises first");
+  await db.categories.delete(id);
+}
+
+async function addExercise({ name, categoryId }) {
+  name = (name || "").trim();
+  if (!name) throw new Error("Name required");
+  if (typeof categoryId !== "number" || isNaN(categoryId)) throw new Error("Pick a category");
+  const existing = await db.exercises.where("name").equals(name).first();
+  if (existing) throw new Error("That exercise already exists");
+  const count = await db.exercises.where("categoryId").equals(categoryId).count();
+  return db.exercises.add({ name, categoryId, orderIndex: count });
+}
+
+async function deleteExercise(id) {
+  await db.transaction("rw", db.exercises, db.sets, async () => {
+    await db.sets.where("exerciseId").equals(id).delete();
+    await db.exercises.delete(id);
+  });
 }
 
 async function previousSets(exerciseId, date) {
@@ -267,10 +342,12 @@ async function weekVolume() {
   const sets = await db.sets.where("date").aboveOrEqual(cutoff).toArray();
   const exs = await db.exercises.toArray();
   const map = new Map(exs.map((e) => [e.id, e]));
-  const vol = new Array(SPLIT.length).fill(0);
+  const vol = new Map();
   for (const s of sets) {
     const ex = map.get(s.exerciseId);
-    if (ex) vol[ex.splitIndex] += (s.weight || 0) * (s.reps || 0);
+    if (!ex || typeof ex.categoryId !== "number") continue;
+    const v = (s.weight || 0) * (s.reps || 0);
+    vol.set(ex.categoryId, (vol.get(ex.categoryId) || 0) + v);
   }
   return vol;
 }
@@ -295,6 +372,7 @@ async function exportAll() {
     app: "gym.umer.ai",
     version: APP_VERSION,
     exported: new Date().toISOString(),
+    categories: await db.categories.toArray(),
     exercises: await db.exercises.toArray(),
     sets: await db.sets.toArray(),
     foods: await db.foods.toArray(),
@@ -312,8 +390,9 @@ async function importAll(json) {
   }
   await db.transaction(
     "rw",
-    [db.exercises, db.sets, db.foods, db.foodLog, db.days, db.settings],
+    [db.categories, db.exercises, db.sets, db.foods, db.foodLog, db.days, db.settings],
     async () => {
+      if (Array.isArray(data.categories)) await db.categories.bulkPut(data.categories);
       if (Array.isArray(data.exercises)) await db.exercises.bulkPut(data.exercises);
       if (Array.isArray(data.sets)) await db.sets.bulkPut(data.sets);
       if (Array.isArray(data.foods)) await db.foods.bulkPut(data.foods);
@@ -347,9 +426,14 @@ export {
   getMuscleWikiKey,
   getUsdaKey,
   splitIndexFor,
-  getStreak,
-  allExercises,
   exercisesForSplit,
+  getStreak,
+  allCategories,
+  addCategory,
+  deleteCategory,
+  addExercise,
+  deleteExercise,
+  allExercises,
   previousSets,
   setsFor,
   bestSet,

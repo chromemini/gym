@@ -42,9 +42,10 @@ async function renderToday() {
   const date = data.todayKey();
   $("today-date").textContent = niceDate(date);
   const exCount = await data.db.exercises.count();
+  const cats = await data.allCategories();
   $("today-split").textContent = "Daily workout";
   $("today-split-ex").textContent =
-    data.SPLIT.map((g) => g.name).join(" · ") + " · " + exCount + " exercises";
+    cats.map((c) => c.name).join(" · ") + " · " + exCount + " exercises";
 
   const target = await data.getSetting("calorieTarget", 2500);
   const kcal = await data.dayKcal(date);
@@ -82,19 +83,20 @@ async function renderWorkout() {
   $("btn-finish").disabled = done;
   $("btn-rest").disabled = !!day.restDay;
 
+  const cats = await data.allCategories();
+  const catMap = new Map(cats.map((c) => [c.id, c]));
   const exs = await data.allExercises();
   const list = $("workout-list");
   list.innerHTML = "";
 
-  let lastGroup = -1;
+  let lastCatId = null;
   for (const ex of exs) {
-    if (ex.splitIndex !== lastGroup) {
-      lastGroup = ex.splitIndex;
+    if (ex.categoryId !== lastCatId) {
+      lastCatId = ex.categoryId;
       const head = document.createElement("h3");
       head.className = "group-title";
-      head.textContent = data.SPLIT[ex.splitIndex]
-        ? data.SPLIT[ex.splitIndex].name
-        : "Other";
+      const cat = catMap.get(ex.categoryId);
+      head.textContent = cat ? cat.name : "Uncategorized";
       list.appendChild(head);
     }
     const prev = await data.previousSets(ex.id, date);
@@ -111,9 +113,14 @@ async function renderWorkout() {
           <h3>${escapeHtml(ex.name)}</h3>
           <p class="muted small">Last: ${prev.length ? prev.map((s) => `${s.weight}kg x ${s.reps}`).join(", ") : "first time"}</p>
         </div>
-        <button class="icon-btn demo-btn" data-demo="${ex.id}" aria-label="How to do it">
-          <svg class="icon"><use href="#i-video"/></svg>
-        </button>
+        <div class="ex-actions">
+          <button class="icon-btn demo-btn" data-demo="${ex.id}" aria-label="How to do it">
+            <svg class="icon"><use href="#i-video"/></svg>
+          </button>
+          <button class="icon-btn del-ex-btn" data-del-ex="${ex.id}" aria-label="Delete exercise">
+            <svg class="icon"><use href="#i-trash"/></svg>
+          </button>
+        </div>
       </div>
       <div class="set-chips">${today.length ? today.map(setChip).join("") : `<span class="muted small">No sets yet today</span>`}</div>
       <div class="grid-3">
@@ -123,6 +130,18 @@ async function renderWorkout() {
       </div>`;
     list.appendChild(card);
   }
+
+  const catChips = cats
+    .map((c) => {
+      const cnt = exs.filter((e) => e.categoryId === c.id).length;
+      const delBtn =
+        cnt === 0
+          ? `<button class="chip-x" data-del-cat="${c.id}" aria-label="Delete category"><svg class="icon small-icon"><use href="#i-x"/></svg></button>`
+          : "";
+      return `<span class="chip">${escapeHtml(c.name)} <span class="muted small">${cnt}</span>${delBtn}</span>`;
+    })
+    .join("");
+  $("cat-list").innerHTML = catChips || `<p class="muted small">No categories yet.</p>`;
 }
 
 async function openDemoModal(exId) {
@@ -188,6 +207,30 @@ function bindWorkout() {
       await renderWorkout();
       return;
     }
+    const delEx = e.target.closest(".del-ex-btn");
+    if (delEx) {
+      const id = parseInt(delEx.dataset.delEx, 10);
+      if (!confirm("Delete this exercise and all its saved sets?")) return;
+      try {
+        await data.deleteExercise(id);
+        showToast("Exercise removed");
+        await renderWorkout();
+      } catch (err) {
+        showToast("Could not delete");
+      }
+      return;
+    }
+    const delCat = e.target.closest("[data-del-cat]");
+    if (delCat) {
+      try {
+        await data.deleteCategory(parseInt(delCat.dataset.delCat, 10));
+        showToast("Category removed");
+        await renderWorkout();
+      } catch (err) {
+        showToast(err.message || "Could not delete");
+      }
+      return;
+    }
     const add = e.target.closest(".add-set");
     if (add) {
       const card = add.closest(".ex-card");
@@ -229,6 +272,72 @@ function bindWorkout() {
     await renderWorkout();
   });
 
+  $("btn-add-exercise").addEventListener("click", async () => {
+    const cats = await data.allCategories();
+    if (!cats.length) {
+      showToast("Add a category first");
+      return;
+    }
+    $("new-ex-cat").innerHTML = cats
+      .map((c) => `<option value="${c.id}">${escapeHtml(c.name)}</option>`)
+      .join("");
+    $("new-ex-name").value = "";
+    $("add-ex-modal").classList.remove("hidden");
+    setTimeout(() => $("new-ex-name").focus(), 60);
+  });
+
+  $("add-ex-modal").addEventListener("click", (e) => {
+    if (e.target === $("add-ex-modal")) $("add-ex-modal").classList.add("hidden");
+  });
+  document.querySelectorAll("[data-close-add-ex]").forEach((b) =>
+    b.addEventListener("click", () => $("add-ex-modal").classList.add("hidden"))
+  );
+
+  $("btn-save-ex").addEventListener("click", async () => {
+    const name = $("new-ex-name").value.trim();
+    const categoryId = parseInt($("new-ex-cat").value, 10);
+    try {
+      await data.addExercise({ name, categoryId });
+      $("add-ex-modal").classList.add("hidden");
+      showToast("Exercise added");
+      await renderWorkout();
+    } catch (err) {
+      showToast(err.message || "Could not add");
+    }
+  });
+
+  $("new-ex-name").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") $("btn-save-ex").click();
+  });
+
+  $("btn-add-category").addEventListener("click", () => {
+    $("new-cat-name").value = "";
+    $("add-cat-modal").classList.remove("hidden");
+    setTimeout(() => $("new-cat-name").focus(), 60);
+  });
+
+  $("add-cat-modal").addEventListener("click", (e) => {
+    if (e.target === $("add-cat-modal")) $("add-cat-modal").classList.add("hidden");
+  });
+  document.querySelectorAll("[data-close-add-cat]").forEach((b) =>
+    b.addEventListener("click", () => $("add-cat-modal").classList.add("hidden"))
+  );
+
+  $("btn-save-cat").addEventListener("click", async () => {
+    const name = $("new-cat-name").value.trim();
+    try {
+      await data.addCategory(name);
+      $("add-cat-modal").classList.add("hidden");
+      showToast("Category added");
+      await renderWorkout();
+    } catch (err) {
+      showToast(err.message || "Could not add");
+    }
+  });
+
+  $("new-cat-name").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") $("btn-save-cat").click();
+  });
 }
 
 function bindSettings() {

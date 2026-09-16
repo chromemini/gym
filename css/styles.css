@@ -283,6 +283,19 @@ label.muted { display: block; margin: 10px 0 6px; }
 
 .ex-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 .ex-head h3 { margin-bottom: 2px; }
+.ex-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+select.input {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 36px;
+}
 
 .set-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 

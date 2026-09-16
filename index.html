@@ -87,6 +87,15 @@
       <svg class="icon"><use href="#i-check"/></svg> Workout done. Well played.
     </div>
     <div id="workout-list"></div>
+    <div class="card">
+      <h3>Customize</h3>
+      <p class="muted small">Add your own categories and exercises. They show up here every day.</p>
+      <div id="cat-list" class="set-chips"></div>
+      <div class="actions" style="margin-top:12px">
+        <button class="btn" id="btn-add-exercise"><svg class="icon"><use href="#i-plus"/></svg> Add exercise</button>
+        <button class="btn" id="btn-add-category"><svg class="icon"><use href="#i-plus"/></svg> Add category</button>
+      </div>
+    </div>
     <div class="actions">
       <button class="btn primary big" id="btn-finish">
         <svg class="icon"><use href="#i-check"/></svg> Finish workout
@@ -199,6 +208,36 @@
       <button class="icon-btn" id="demo-close"><svg class="icon"><use href="#i-x"/></svg></button>
     </div>
     <div id="demo-body"></div>
+  </div>
+</div>
+
+<div class="modal-backdrop hidden" id="add-ex-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Add exercise</h3>
+      <button class="icon-btn" data-close-add-ex aria-label="Close"><svg class="icon"><use href="#i-x"/></svg></button>
+    </div>
+    <label class="muted small" for="new-ex-name">Exercise name</label>
+    <input type="text" id="new-ex-name" class="input" placeholder="e.g. Cable Fly" autocomplete="off">
+    <label class="muted small" for="new-ex-cat">Category</label>
+    <select id="new-ex-cat" class="input"></select>
+    <div class="actions">
+      <button class="btn primary" id="btn-save-ex"><svg class="icon"><use href="#i-check"/></svg> Save exercise</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop hidden" id="add-cat-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Add category</h3>
+      <button class="icon-btn" data-close-add-cat aria-label="Close"><svg class="icon"><use href="#i-x"/></svg></button>
+    </div>
+    <label class="muted small" for="new-cat-name">Category name</label>
+    <input type="text" id="new-cat-name" class="input" placeholder="e.g. Glutes" autocomplete="off">
+    <div class="actions">
+      <button class="btn primary" id="btn-save-cat"><svg class="icon"><use href="#i-check"/></svg> Save category</button>
+    </div>
   </div>
 </div>
 

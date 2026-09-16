@@ -6,16 +6,22 @@ import { $, escapeHtml } from "./ui.js";
 export async function renderProgress() {
   $("progress-streak").textContent = await data.getStreak();
 
+  const cats = await data.allCategories();
   const vol = await data.weekVolume();
-  const max = Math.max(...vol, 1);
-  $("volume-list").innerHTML = data.SPLIT.map(
-    (s, i) => `
+  const vals = cats.map((c) => vol.get(c.id) || 0);
+  const max = Math.max(...vals, 1);
+  $("volume-list").innerHTML = cats.length
+    ? cats
+        .map(
+          (c, i) => `
     <div class="vol-row">
-      <span class="vol-label">${s.name}</span>
-      <div class="vol-bar"><div class="vol-fill" style="width:${Math.round((vol[i] / max) * 100)}%"></div></div>
-      <span class="muted small">${Math.round(vol[i])}</span>
+      <span class="vol-label">${escapeHtml(c.name)}</span>
+      <div class="vol-bar"><div class="vol-fill" style="width:${Math.round((vals[i] / max) * 100)}%"></div></div>
+      <span class="muted small">${Math.round(vals[i])}</span>
     </div>`
-  ).join("");
+        )
+        .join("")
+    : `<p class="muted small">No categories yet.</p>`;
 
   const exs = await data.db.exercises.toArray();
   const prs = [];
