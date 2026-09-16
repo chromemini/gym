@@ -264,7 +264,7 @@ async function searchLocalFoods(q) {
 
 async function weekVolume() {
   const cutoff = dateKey(addDays(new Date(), -6));
-  const sets = await db.sets.where("date").aboveOr(cutoff).toArray();
+  const sets = await db.sets.where("date").aboveOrEqual(cutoff).toArray();
   const exs = await db.exercises.toArray();
   const map = new Map(exs.map((e) => [e.id, e]));
   const vol = new Array(SPLIT.length).fill(0);

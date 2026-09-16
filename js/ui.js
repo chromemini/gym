@@ -55,8 +55,9 @@ export async function openDemo({ name, notes, videoUrl, mwKey, onSave }) {
       <button class="btn" id="demo-save"><svg class="icon"><use href="#i-check"/></svg> Save link</button>
     </div>
     <div class="actions">
-      <p class="muted small">MuscleWiki does not allow direct browser video loading from this app. Use the verified search button, then paste the exact video link here to save it for this exercise.</p>
-      <a class="btn" target="_blank" rel="noopener" href="https://www.google.com/search?q=${encodeURIComponent(name + " form MuscleWiki")}">Find verified MuscleWiki form</a>
+      <p class="muted small">Tap below to load MuscleWiki videos for this exercise. If a video opens, copy its link and paste it in the box above to save it.</p>
+      <button class="btn" id="demo-mw"><svg class="icon"><use href="#i-video"/></svg> Load MuscleWiki videos</button>
+      <a class="btn" target="_blank" rel="noopener" href="https://www.google.com/search?q=${encodeURIComponent(name + " form MuscleWiki")}">Search on Google</a>
     </div>
     <div id="demo-mw-list"></div>`;
 
@@ -104,4 +105,5 @@ export async function openDemo({ name, notes, videoUrl, mwKey, onSave }) {
   }
 
   $("demo-modal").classList.remove("hidden");
+  if (mwBtn) mwBtn.click();
 }
