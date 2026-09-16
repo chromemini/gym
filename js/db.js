@@ -1,8 +1,15 @@
 // js/db.js — all data lives here. Dexie.js sits on top of IndexedDB.
 // The rest of the app only talks to this file, never to the database directly.
 
-const APP_VERSION = "1.01";
+const APP_VERSION = "1.02";
 
+// Keys shared with everyone using this app. Paste your keys here once and every
+// user gets them automatically. If a user saves their own key in Settings, that
+// one wins over these.
+const EMBEDDED_MUSCLEWIKI_KEY = "mw_ZQd9cu2XlsGHzmBgbyyb9l7NOWjoU29MWASrEqXIRbM";
+const EMBEDDED_USDA_KEY = "8eM9b8LYdNkKFtI7Pj0c0aRfDyBh0ZU8jt9phqMW";
+
+// One daily plan. Every group below is trained in the same workout, every day.
 const SPLIT = [
   { name: "Forearms", exercises: ["Reverse EZ Bar Curl", "Hammer Curl"] },
   { name: "Shoulders", exercises: ["Cable Side Lateral Raise"] },
@@ -141,18 +148,12 @@ async function updateDay(date, patch) {
   });
 }
 
-async function splitIndexFor(date) {
-  const day = await db.days.get(date);
-  if (day && typeof day.splitIndex === "number") return day.splitIndex;
-  const anchor = await getSetting("planAnchor", null);
-  if (!anchor) {
-    await setSetting("planAnchor", date);
-    return 0;
-  }
-  const diff = Math.floor(
-    (new Date(date + "T00:00:00") - new Date(anchor + "T00:00:00")) / 86400000
-  );
-  return ((diff % 7) + 7) % 7;
+async function getMuscleWikiKey() {
+  return (await getSetting("musclewikiKey", "")) || EMBEDDED_MUSCLEWIKI_KEY;
+}
+
+async function getUsdaKey() {
+  return (await getSetting("usdaKey", "")) || EMBEDDED_USDA_KEY;
 }
 
 async function getStreak() {
@@ -174,6 +175,27 @@ async function getStreak() {
     }
   }
   return streak;
+}
+
+async function allExercises() {
+  const all = await db.exercises.toArray();
+  return all.sort(
+    (a, b) => a.splitIndex - b.splitIndex || a.orderIndex - b.orderIndex
+  );
+}
+
+async function splitIndexFor(date) {
+  const day = await db.days.get(date);
+  if (day && typeof day.splitIndex === "number") return day.splitIndex;
+  const anchor = await getSetting("planAnchor", null);
+  if (!anchor) {
+    await setSetting("planAnchor", date);
+    return 0;
+  }
+  const diff = Math.floor(
+    (new Date(date + "T00:00:00") - new Date(anchor + "T00:00:00")) / 86400000
+  );
+  return ((diff % 7) + 7) % 7;
 }
 
 async function exercisesForSplit(idx) {
@@ -322,8 +344,11 @@ export {
   setSetting,
   getDay,
   updateDay,
+  getMuscleWikiKey,
+  getUsdaKey,
   splitIndexFor,
   getStreak,
+  allExercises,
   exercisesForSplit,
   previousSets,
   setsFor,

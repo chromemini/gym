@@ -76,10 +76,9 @@
   <section id="screen-workout" class="screen">
     <div class="screen-head">
       <div>
-        <h2 id="workout-split-name">—</h2>
+        <h2 id="workout-title">Daily workout</h2>
         <p class="muted small" id="workout-date">—</p>
       </div>
-      <button class="btn small" id="btn-rotate">Next day plan</button>
     </div>
     <div class="banner hidden" id="workout-done-banner">
       <svg class="icon"><use href="#i-check"/></svg> Workout done. Well played.
@@ -166,10 +165,11 @@
       <p class="muted small" id="backup-status"></p>
     </div>
     <div class="card">
-      <h3>Extra (optional)</h3>
-      <label class="muted small" for="set-usda">USDA food key. Better online food search. Free at fdc.nal.usda.gov/api-key</label>
+      <h3>Your own keys (optional)</h3>
+      <p class="muted small">The app already uses the keys built into it. Add your own key only if you want to use your own separate one.</p>
+      <label class="muted small" for="set-usda">USDA food key. Free at fdc.nal.usda.gov/api-key</label>
       <input type="text" id="set-usda" class="input" placeholder="USDA API key" autocomplete="off">
-      <label class="muted small" for="set-mw">MuscleWiki key. Real demo videos. Free at api.musclewiki.com</label>
+      <label class="muted small" for="set-mw">MuscleWiki key. Free at api.musclewiki.com</label>
       <input type="text" id="set-mw" class="input" placeholder="MuscleWiki API key" autocomplete="off">
       <button class="btn" id="btn-save-keys"><svg class="icon"><use href="#i-check"/></svg> Save keys</button>
     </div>

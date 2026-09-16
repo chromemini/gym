@@ -68,7 +68,7 @@ function renderResults(items, fromWeb) {
 
 async function searchWeb(q) {
   const out = [];
-  const usdaKey = await data.getSetting("usdaKey", "");
+  const usdaKey = await data.getUsdaKey();
 
   if (usdaKey) {
     try {

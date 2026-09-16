@@ -41,10 +41,10 @@ async function updateStreakBadge() {
 async function renderToday() {
   const date = data.todayKey();
   $("today-date").textContent = niceDate(date);
-  const idx = await data.splitIndexFor(date);
-  const split = data.SPLIT[idx];
-  $("today-split").textContent = split.name + " day";
-  $("today-split-ex").textContent = split.exercises.join(" + ");
+  const exCount = await data.db.exercises.count();
+  $("today-split").textContent = "Daily workout";
+  $("today-split-ex").textContent =
+    data.SPLIT.map((g) => g.name).join(" · ") + " · " + exCount + " exercises";
 
   const target = await data.getSetting("calorieTarget", 2500);
   const kcal = await data.dayKcal(date);
@@ -72,10 +72,8 @@ function setChip(s) {
 
 async function renderWorkout() {
   const date = data.todayKey();
-  const idx = await data.splitIndexFor(date);
-  const split = data.SPLIT[idx];
 
-  $("workout-split-name").textContent = split.name + " day";
+  $("workout-title").textContent = "Daily workout";
   $("workout-date").textContent = niceDate(date);
 
   const day = await data.getDay(date);
@@ -84,11 +82,21 @@ async function renderWorkout() {
   $("btn-finish").disabled = done;
   $("btn-rest").disabled = !!day.restDay;
 
-  const exs = await data.exercisesForSplit(idx);
+  const exs = await data.allExercises();
   const list = $("workout-list");
   list.innerHTML = "";
 
+  let lastGroup = -1;
   for (const ex of exs) {
+    if (ex.splitIndex !== lastGroup) {
+      lastGroup = ex.splitIndex;
+      const head = document.createElement("h3");
+      head.className = "group-title";
+      head.textContent = data.SPLIT[ex.splitIndex]
+        ? data.SPLIT[ex.splitIndex].name
+        : "Other";
+      list.appendChild(head);
+    }
     const prev = await data.previousSets(ex.id, date);
     const today = await data.setsFor(date, ex.id);
     const lastW = prev.length ? prev[prev.length - 1].weight : "";
@@ -120,7 +128,7 @@ async function renderWorkout() {
 async function openDemoModal(exId) {
   const ex = await data.db.exercises.get(exId);
   const videoUrl = await data.getSetting("video:" + exId, "");
-  const mwKey = await data.getSetting("musclewikiKey", "");
+  const mwKey = await data.getMuscleWikiKey();
   await openDemo({
     name: ex.name,
     notes: data.FORM_NOTES[ex.name] || "",
@@ -222,12 +230,6 @@ function bindWorkout() {
     await renderWorkout();
   });
 
-  $("btn-rotate").addEventListener("click", async () => {
-    const date = data.todayKey();
-    const cur = await data.splitIndexFor(date);
-    await data.updateDay(date, { splitIndex: (cur + 1) % data.SPLIT.length });
-    await renderWorkout();
-  });
 }
 
 function bindSettings() {
