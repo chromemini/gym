@@ -1,24 +1,24 @@
 {
   "reverse ez bar curl": [
-    { "kind": "image", "url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Reverse_Barbell_Curl/0.jpg", "source": "free-exercise-db", "license": "Unlicense" }
+    { "kind": "yt", "id": "yXnhFGBSnxM", "source": "YouTube", "license": "YouTube ToS" }
   ],
   "hammer curl": [
     { "kind": "image", "url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Hammer_Curls/0.jpg", "source": "free-exercise-db", "license": "Unlicense" }
   ],
   "cable side lateral raise": [
-    { "kind": "image", "url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Side_Lateral_Raise/0.jpg", "source": "free-exercise-db", "license": "Unlicense" }
+    { "kind": "yt", "id": "KVauca12MF4", "source": "YouTube", "license": "YouTube ToS" }
   ],
   "lat pulldown": [
-    { "kind": "image", "url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Wide-Grip_Lat_Pulldown/0.jpg", "source": "free-exercise-db", "license": "Unlicense" }
+    { "kind": "yt", "id": "91vWjU1tuCc", "source": "YouTube", "license": "YouTube ToS" }
   ],
   "seated cable row": [
-    { "kind": "image", "url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Seated_Cable_Rows/0.jpg", "source": "free-exercise-db", "license": "Unlicense" }
+    { "kind": "yt", "id": "9YwQVY4Nb3E", "source": "YouTube", "license": "YouTube ToS" }
   ],
   "incline db press": [
-    { "kind": "image", "url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Incline_Dumbbell_Press/0.jpg", "source": "free-exercise-db", "license": "Unlicense" }
+    { "kind": "yt", "id": "AUJtWOQRHPI", "source": "YouTube", "license": "YouTube ToS" }
   ],
   "incline smith press": [
-    { "kind": "image", "url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Incline_Dumbbell_Press/0.jpg", "source": "free-exercise-db", "license": "Unlicense" }
+    { "kind": "yt", "id": "OMlWrmnvUnY", "source": "YouTube", "license": "YouTube ToS" }
   ],
   "overhead extension": [
     { "kind": "image", "url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Standing_Dumbbell_Triceps_Extension/0.jpg", "source": "free-exercise-db", "license": "Unlicense" }
@@ -27,9 +27,9 @@
     { "kind": "image", "url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Incline_Dumbbell_Curl/0.jpg", "source": "free-exercise-db", "license": "Unlicense" }
   ],
   "bayesian curl": [
-    { "kind": "image", "url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Cable_Curl/0.jpg", "source": "free-exercise-db", "license": "Unlicense" }
+    { "kind": "yt", "id": "_Z8Afknw_Fc", "source": "YouTube", "license": "YouTube ToS" }
   ],
   "hack squat": [
-    { "kind": "image", "url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Hack_Squat/0.jpg", "source": "free-exercise-db", "license": "Unlicense" }
+    { "kind": "yt", "id": "vaU2FSmUhNc", "source": "YouTube", "license": "YouTube ToS" }
   ]
 }

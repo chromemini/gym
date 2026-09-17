@@ -76,7 +76,15 @@ export async function openDemo({ name, notes, videoUrl, candidates, onSave } = {
     cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
   } catch (e) {}
   if (Array.isArray(cached) && cached.length) {
-    videosHtml += cached.map(renderMedia).join("");
+    const seen = new Set();
+    if (videoUrl) seen.add(videoUrl);
+    const unique = [];
+    for (const u of cached) {
+      if (!u || seen.has(u)) continue;
+      seen.add(u);
+      unique.push(u);
+    }
+    if (unique.length) videosHtml += unique.map(renderMedia).join("");
   }
 
   const showAuto = hasCandidates && !videosHtml;
