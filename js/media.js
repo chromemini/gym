@@ -20,7 +20,10 @@ function urlToCandidate(url) {
   const u = url.trim();
   if (!u) return null;
   const yt = /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/i.exec(u);
-  if (yt) return { kind: "yt", id: yt[1], source: "YouTube", license: "YouTube ToS" };
+  if (yt) {
+    const portrait = /youtube\.com\/shorts\//i.test(u);
+    return { kind: "yt", id: yt[1], portrait, source: "YouTube", license: "YouTube ToS" };
+  }
   if (/\.(mp4|webm|ogg|ogv|mov|m4v)(\?|#|$)/i.test(u)) return { kind: "video", url: u, source: "video" };
   if (/\.gif(\?|#|$)/i.test(u)) return { kind: "gif", url: u, source: "gif" };
   if (/\.(png|jpe?g|webp|avif)(\?|#|$)/i.test(u)) return { kind: "image", url: u, source: "image" };
@@ -154,7 +157,7 @@ export function renderCandidates(container, candidates) {
 
     if (c.kind === "yt") {
       const iframe = document.createElement("iframe");
-      iframe.className = "demo-video";
+      iframe.className = c.portrait ? "demo-video portrait" : "demo-video";
       iframe.src = "https://www.youtube-nocookie.com/embed/" + c.id;
       iframe.title = "Exercise demo";
       iframe.setAttribute("allow", "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture");

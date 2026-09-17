@@ -35,7 +35,10 @@ function mediaType(url) {
   const u = url.trim();
   if (!u) return null;
   const yt = /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/i.exec(u);
-  if (yt) return { kind: "yt", id: yt[1] };
+  if (yt) {
+    const portrait = /youtube\.com\/shorts\//i.test(u);
+    return { kind: "yt", id: yt[1], portrait };
+  }
   if (/\.(mp4|webm|ogg|ogv|mov|m4v)(\?|#|$)/i.test(u)) return { kind: "video" };
   if (/\.(gif|png|jpe?g|webp|avif)(\?|#|$)/i.test(u)) return { kind: "image" };
   return null;
@@ -44,13 +47,14 @@ function mediaType(url) {
 function renderMedia(url) {
   const t = mediaType(url);
   if (!t) return "";
+  const cls = t.portrait ? "demo-video portrait" : "demo-video";
   if (t.kind === "yt") {
-    return `<iframe class="demo-video" src="https://www.youtube.com/embed/${t.id}" title="Exercise demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+    return `<iframe class="${cls}" src="https://www.youtube.com/embed/${t.id}" title="Exercise demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
   }
   if (t.kind === "video") {
-    return `<video class="demo-video" controls playsinline src="${escapeHtml(url)}"></video>`;
+    return `<video class="${cls}" controls playsinline src="${escapeHtml(url)}"></video>`;
   }
-  return `<img class="demo-video" src="${escapeHtml(url)}" alt="Exercise demonstration" loading="lazy">`;
+  return `<img class="${cls}" src="${escapeHtml(url)}" alt="Exercise demonstration" loading="lazy">`;
 }
 
 export function isPlayableUrl(url) {

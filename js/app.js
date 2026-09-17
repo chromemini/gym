@@ -447,6 +447,47 @@ function bindSettings() {
     }
     e.target.value = "";
   });
+
+  $("btn-clear-cache").addEventListener("click", async () => {
+    if (
+      !confirm(
+        "Clear the app cache and reload?\n\n" +
+          "This removes cached files and saved demo links so the newest version loads fresh.\n" +
+          "Your workouts, food log, targets and PIN are NOT deleted."
+      )
+    )
+      return;
+
+    const status = $("cache-status");
+    if (status) status.textContent = "Clearing…";
+
+    try {
+      if ("serviceWorker" in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map((r) => r.unregister().catch(() => false)));
+      }
+    } catch (e) {}
+
+    try {
+      if (window.caches && caches.keys) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k)));
+      }
+    } catch (e) {}
+
+    try {
+      const stale = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith("gym.demo.v2.")) stale.push(k);
+      }
+      stale.forEach((k) => localStorage.removeItem(k));
+    } catch (e) {}
+
+    if (status) status.textContent = "Cache cleared. Reloading…";
+    showToast("Cache cleared");
+    setTimeout(() => location.reload(), 500);
+  });
 }
 
 async function init() {
