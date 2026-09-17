@@ -502,7 +502,25 @@ async function init() {
     } catch (e) {}
   }
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("sw.js").catch(() => {});
+    try {
+      const reg = await navigator.serviceWorker.register("sw.js", {
+        updateViaCache: "none"
+      });
+      reg.update().catch(() => {});
+      reg.addEventListener("updatefound", () => {
+        const nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener("statechange", () => {
+          if (nw.state === "installed" && navigator.serviceWorker.controller) {
+            showToast("Update ready. Reloading…");
+            setTimeout(() => location.reload(), 900);
+          }
+        });
+      });
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) reg.update().catch(() => {});
+      });
+    } catch (e) {}
   }
 
   bindNavigation();

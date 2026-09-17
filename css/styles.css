@@ -443,16 +443,17 @@ select.input {
   border: 0;
 }
 
-/* Portrait (YouTube Shorts and similar 9:16 sources). Shrinks to a
-   watchable width and centers itself, so the whole frame stays visible
-   without awkward letterboxing on a landscape card. */
+/* Portrait (YouTube Shorts and similar 9:16 sources). Tall, centered,
+   capped so it never dominates the viewport. Uses explicit width plus
+   aspect-ratio so it works even if an old stylesheet sneaks past cache. */
 .demo-video.portrait {
-  aspect-ratio: 9 / 16;
-  width: auto;
-  max-width: min(100%, 380px);
-  max-height: 72vh;
-  margin-left: auto;
-  margin-right: auto;
+  aspect-ratio: 9 / 16 !important;
+  width: 100% !important;
+  max-width: min(100%, 360px) !important;
+  height: auto !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  display: block !important;
 }
 
 img.demo-video { object-fit: contain; background: var(--surface2); }

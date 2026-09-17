@@ -1,6 +1,6 @@
 // sw.js — service worker. Keeps the app shell cached so the app opens with zero internet.
 
-const CACHE = "gym-umer-ai-v1.18";
+const CACHE = "gym-umer-ai-v1.19";
 
 const ASSETS = [
   "./",
@@ -22,10 +22,19 @@ const ASSETS = [
 
 self.addEventListener("install", (e) => {
   e.waitUntil(
-    caches
-      .open(CACHE)
-      .then((c) => Promise.allSettled(ASSETS.map((a) => c.add(a))))
-      .then(() => self.skipWaiting())
+    caches.open(CACHE).then((c) =>
+      Promise.allSettled(
+        ASSETS.map((url) =>
+          fetch(new Request(url, { cache: "reload" }))
+            .then((res) => {
+              if (res && (res.ok || res.type === "opaque")) {
+                return c.put(url, res);
+              }
+            })
+            .catch(() => {})
+        )
+      )
+    ).then(() => self.skipWaiting())
   );
 });
 
