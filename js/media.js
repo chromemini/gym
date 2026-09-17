@@ -6,11 +6,38 @@
 // link as the guaranteed floor.
 
 import * as data from "./db.js";
+import { VIDEOS } from "../media/videos.js";
 
 const MATCH_THRESHOLD = 0.85;
 
-let MANIFEST = null;
 let INDEX = null;
+let NORMALIZED_VIDEOS = null;
+
+// Turn any supported URL into a candidate object. Returns null if the URL
+// doesn't look like anything we know how to play.
+function urlToCandidate(url) {
+  if (!url || typeof url !== "string") return null;
+  const u = url.trim();
+  if (!u) return null;
+  const yt = /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/i.exec(u);
+  if (yt) return { kind: "yt", id: yt[1], source: "YouTube", license: "YouTube ToS" };
+  if (/\.(mp4|webm|ogg|ogv|mov|m4v)(\?|#|$)/i.test(u)) return { kind: "video", url: u, source: "video" };
+  if (/\.gif(\?|#|$)/i.test(u)) return { kind: "gif", url: u, source: "gif" };
+  if (/\.(png|jpe?g|webp|avif)(\?|#|$)/i.test(u)) return { kind: "image", url: u, source: "image" };
+  return null;
+}
+
+// Build a normalized lookup from media/videos.js once, lazily.
+function getNormalizedVideos() {
+  if (NORMALIZED_VIDEOS) return NORMALIZED_VIDEOS;
+  NORMALIZED_VIDEOS = {};
+  const src = VIDEOS || {};
+  for (const key of Object.keys(src)) {
+    const c = urlToCandidate(src[key]);
+    if (c) NORMALIZED_VIDEOS[normalize(key)] = c;
+  }
+  return NORMALIZED_VIDEOS;
+}
 
 function normalize(s) {
   return String(s || "")
@@ -45,16 +72,6 @@ function confidence(a, b) {
   return Math.max(0, 1 - levenshtein(a, b) / max);
 }
 
-async function loadManifest() {
-  if (MANIFEST) return MANIFEST;
-  try {
-    const res = await fetch("./media/manifest.json", { cache: "force-cache" });
-    if (res.ok) MANIFEST = await res.json();
-  } catch (e) {}
-  if (!MANIFEST || typeof MANIFEST !== "object") MANIFEST = {};
-  return MANIFEST;
-}
-
 async function loadIndex() {
   if (INDEX) return INDEX;
   try {
@@ -77,11 +94,9 @@ export async function resolveMedia(name) {
   const slug = normalize(name);
   if (!slug) return out;
 
-  // Tier 0 — exact manifest match (curated, deterministic, 100% accurate)
-  const manifest = await loadManifest();
-  if (manifest[slug] && Array.isArray(manifest[slug]) && manifest[slug].length) {
-    out.push(...manifest[slug]);
-  }
+  // Tier 0 — user-editable video links from media/videos.js
+  const fromVideos = getNormalizedVideos()[slug];
+  if (fromVideos) out.push(fromVideos);
 
   // Tier 1 — bundled index with confidence-gated fuzzy match
   if (!out.length) {

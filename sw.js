@@ -1,6 +1,6 @@
 // sw.js — service worker. Keeps the app shell cached so the app opens with zero internet.
 
-const CACHE = "gym-umer-ai-v1.15";
+const CACHE = "gym-umer-ai-v1.16";
 
 const ASSETS = [
   "./",
@@ -13,9 +13,9 @@ const ASSETS = [
   "./js/progress.js",
   "./js/pin.js",
   "./js/media.js",
+  "./media/videos.js",
   "./manifest.json",
   "./icon.svg",
-  "./media/manifest.json",
   "./media/index.json",
   "https://cdn.jsdelivr.net/npm/dexie@4.0.8/dist/dexie.min.js"
 ];
