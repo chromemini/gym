@@ -1,0 +1,35 @@
+{
+  "reverse ez bar curl": [
+    { "kind": "image", "url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Reverse_Barbell_Curl/0.jpg", "source": "free-exercise-db", "license": "Unlicense" }
+  ],
+  "hammer curl": [
+    { "kind": "image", "url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Hammer_Curls/0.jpg", "source": "free-exercise-db", "license": "Unlicense" }
+  ],
+  "cable side lateral raise": [
+    { "kind": "image", "url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Side_Lateral_Raise/0.jpg", "source": "free-exercise-db", "license": "Unlicense" }
+  ],
+  "lat pulldown": [
+    { "kind": "image", "url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Wide-Grip_Lat_Pulldown/0.jpg", "source": "free-exercise-db", "license": "Unlicense" }
+  ],
+  "seated cable row": [
+    { "kind": "image", "url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Seated_Cable_Rows/0.jpg", "source": "free-exercise-db", "license": "Unlicense" }
+  ],
+  "incline db press": [
+    { "kind": "image", "url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Incline_Dumbbell_Press/0.jpg", "source": "free-exercise-db", "license": "Unlicense" }
+  ],
+  "incline smith press": [
+    { "kind": "image", "url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Incline_Dumbbell_Press/0.jpg", "source": "free-exercise-db", "license": "Unlicense" }
+  ],
+  "overhead extension": [
+    { "kind": "image", "url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Standing_Dumbbell_Triceps_Extension/0.jpg", "source": "free-exercise-db", "license": "Unlicense" }
+  ],
+  "incline db curl": [
+    { "kind": "image", "url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Incline_Dumbbell_Curl/0.jpg", "source": "free-exercise-db", "license": "Unlicense" }
+  ],
+  "bayesian curl": [
+    { "kind": "image", "url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Cable_Curl/0.jpg", "source": "free-exercise-db", "license": "Unlicense" }
+  ],
+  "hack squat": [
+    { "kind": "image", "url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Hack_Squat/0.jpg", "source": "free-exercise-db", "license": "Unlicense" }
+  ]
+}

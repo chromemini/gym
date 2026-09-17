@@ -1,6 +1,6 @@
 // sw.js — service worker. Keeps the app shell cached so the app opens with zero internet.
 
-const CACHE = "gym-umer-ai-v1.13";
+const CACHE = "gym-umer-ai-v1.14";
 
 const ASSETS = [
   "./",
@@ -12,8 +12,11 @@ const ASSETS = [
   "./js/food.js",
   "./js/progress.js",
   "./js/pin.js",
+  "./js/media.js",
   "./manifest.json",
   "./icon.svg",
+  "./media/manifest.json",
+  "./media/index.json",
   "https://cdn.jsdelivr.net/npm/dexie@4.0.8/dist/dexie.min.js"
 ];
 
@@ -41,7 +44,7 @@ self.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);
-  if (url.origin !== location.origin && !url.hostname.includes("jsdelivr")) return;
+  if (url.origin !== location.origin && !url.hostname.includes("jsdelivr") && url.hostname !== "raw.githubusercontent.com") return;
   e.respondWith(
     caches.match(req).then(
       (hit) =>

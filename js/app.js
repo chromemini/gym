@@ -1,6 +1,7 @@
 // js/app.js — screens: Today, Gym, Settings. Loads the app and connects everything.
 
 import * as data from "./db.js";
+import * as media from "./media.js";
 import { $, showToast, openDemo, closeDemo, escapeHtml, isPlayableUrl } from "./ui.js";
 import { initFood, renderFood } from "./food.js";
 import { renderProgress } from "./progress.js";
@@ -149,10 +150,19 @@ async function openDemoModal(exId) {
   const ex = await data.db.exercises.get(exId);
   let videoUrl = await data.getSetting("video:" + exId, "");
   if (videoUrl && !isPlayableUrl(videoUrl)) videoUrl = "";
+  let candidates = [];
+  if (!videoUrl && (await media.isAutoMediaEnabled())) {
+    try {
+      candidates = await media.resolveMedia(ex.name);
+    } catch (e) {
+      candidates = [];
+    }
+  }
   await openDemo({
     name: ex.name,
     notes: data.FORM_NOTES[ex.name] || "",
     videoUrl,
+    candidates,
     onSave: async (url) => {
       await data.setSetting("video:" + exId, url);
       showToast(url ? "Video link saved" : "Video link cleared");
@@ -167,6 +177,9 @@ async function renderSettings() {
   $("set-mw").value = await data.getSetting("musclewikiKey", "");
   const theme = await data.getSetting("theme", "dark");
   $("theme-label").textContent = theme === "dark" ? "Switch to light" : "Switch to dark";
+
+  const autoOn = await data.getSetting("autoMedia", true);
+  $("auto-media-label").textContent = autoOn ? "On" : "Off";
 
   const pin = await data.getPin();
   $("pin-status").textContent = pin
@@ -387,6 +400,13 @@ function bindSettings() {
     await data.setSetting("theme", next);
     document.body.classList.toggle("light", next === "light");
     $("theme-label").textContent = next === "dark" ? "Switch to light" : "Switch to dark";
+  });
+
+  $("btn-auto-media").addEventListener("click", async () => {
+    const cur = await data.getSetting("autoMedia", true);
+    await data.setSetting("autoMedia", !cur);
+    $("auto-media-label").textContent = !cur ? "On" : "Off";
+    showToast(!cur ? "Auto demos on" : "Auto demos off");
   });
 
   $("btn-set-pin").addEventListener("click", async () => {
